@@ -460,7 +460,15 @@
     <script>
         /* MASTER & USER PASSWORD LOCK SYSTEM LOGIC */
         let DEFAULT_USER_PASS = "2345";        
-        let DEFAULT_MASTER_PASS = "sohag999";   
+        let DEFAULT_MASTER_PASS = "sohag999";  
+        async function getRealPassword() {
+  try {
+    let res = await fetch('https://raw.githubusercontent.com/hasansohaginfo/Result-/main/password.txt?t=' + Date.now());
+    return (await res.text()).trim();
+  } catch (e) {
+    return "1234";
+  }
+}
 
         let savedUserPass = localStorage.getItem('madrasha_soft_user_pass') || DEFAULT_USER_PASS;
         let savedMasterPass = localStorage.getItem('madrasha_soft_master_pass') || DEFAULT_MASTER_PASS;
