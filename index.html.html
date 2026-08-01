@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Academic Result Software - SOHAG KOBIR</title>
+    <!-- PWA Web App Manifest (Inline Blob Creation via JS) -->
+    <style>
+        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { margin: 0; padding: 15px; background-color: #f4f6f9; color: #222; font-size: 15px; position: relative; }
+
+        /* LOCK SCREEN OVERLAY */
+        #lockScreenOverlay {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: #0f3057; z-index: 99999; display: flex; justify-content: center; align-items: center; flex-direction: column;
+        }
+        .lock-box { background: white; padding: 30px 40px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); text-align: center; max-width: 380px; width: 90%; }
+        .lock-box h2 { margin-top: 0; color: #1B4D7E; font-size: 20px; text-transform: uppercase; }
+        .lock-box input { width: 100%; padding: 10px; margin: 15px 0; border: 2px solid #cbd5e1; border-radius: 6px; font-size: 16px; text-align: center; outline: none; }
+        .lock-box input:focus { border-color: #1B4D7E; }
+        .lock-box button { width: 100%; background: #1B4D7E; color: white; padding: 10px; border: none; border-radius: 6px; font-size: 15px; font-weight: bold; cursor: pointer; }
+        .lock-box button:hover { background: #0f3057; }
+        .lock-error { color: #e74c3c; font-weight: bold; font-size: 13px; margin-top: 10px; display: none; }
+
+        @page { size: landscape; margin: 4mm; }
+
+        /* HEADER & SEARCH CONTAINER */
+        .title-header-container { display: flex; justify-content: space-between; align-items: center; background: #ffffff; padding: 12px 20px; border-radius: 6px; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-left: 5px solid #1B4D7E; flex-wrap: wrap; gap: 10px; }
+        .permanent-software-title { font-size: 18px; font-weight: 800; letter-spacing: 0.5px; color: #1B4D7E; text-transform: uppercase; margin: 0; }
+        .permanent-software-title span { display: block; font-size: 13px; color: #7f8c8d; font-weight: 600; margin-top: 3px; letter-spacing: 1px; }
+
+        .global-search-box { display: flex; align-items: center; gap: 5px; position: relative; }
+        .global-search-box input { padding: 8px 12px; border: 2px solid #1B4D7E; border-radius: 20px; font-size: 13px; outline: none; width: 220px; transition: width 0.3s ease; }
+        .global-search-box input:focus { width: 280px; background-color: #f8fafc; }
+        .global-search-box button { background-color: #1B4D7E; color: white; border: none; padding: 8px 15px; border-radius: 20px; cursor: pointer; font-weight: bold; font-size: 12px; }
+
+        .search-results-popup { position: absolute; top: 45px; right: 0; background: white; border: 1px solid #cbd5e1; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.15); width: 340px; max-height: 250px; overflow-y: auto; z-index: 2000; display: none; }
+        .search-item { padding: 10px 15px; border-bottom: 1px solid #f1f5f9; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+        .search-item:hover { background-color: #e2e8f0; }
+
+        /* NAVBAR & DROPDOWN */
+        .navbar-container { background: #1B4D7E; padding: 0 10px; border-radius: 6px 6px 0 0; display: flex; align-items: center; border-bottom: 3px solid #0f3057; margin-bottom: 15px; gap: 5px; position: relative; z-index: 100; }
+        .year-navbar-list { display: flex; align-items: center; gap: 5px; }
+        .dropdown-main { position: relative; display: inline-block; }
+        .dropbtn-year { background-color: #1B4D7E; color: white; padding: 12px 18px; font-size: 15px; font-weight: bold; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px; border-bottom: 3px solid transparent; }
+        .dropdown-main:hover .dropbtn-year { background-color: #0f3057; border-bottom: 3px solid #f1c40f; }
+        .dropdown-content-menu { display: none; position: absolute; top: 100%; left: 0; background-color: #ffffff; min-width: 230px; max-height: 400px; overflow-y: auto; box-shadow: 0px 8px 16px rgba(0,0,0,0.2); z-index: 9999; border-radius: 0 0 6px 6px; border: 1px solid #cbd5e1; }
+        .dropdown-content-menu div.folder-item { color: #1e293b; padding: 10px 15px; display: flex; align-items: center; justify-content: space-between; font-size: 13px; font-weight: 600; border-bottom: 1px solid #f1f5f9; cursor: pointer; }
+        .dropdown-content-menu div.folder-item:hover { background-color: #e2e8f0; color: #1B4D7E; }
+        .dropdown-main:hover .dropdown-content-menu { display: block !important; }
+        .btn-add-year-folder { background-color: #27AE60; color: white; border: none; padding: 8px 14px; font-size: 13px; font-weight: bold; border-radius: 4px; cursor: pointer; margin-left: 10px; white-space: nowrap; }
+
+        /* PRINT SETTINGS */
+        body.print-marksheet-mode .main-table-view, body.print-marksheet-mode .no-print, body.print-marksheet-mode .navbar-container, body.print-marksheet-mode .print-only-header, body.print-marksheet-mode .title-header-container { display: none !important; }
+        body.print-marksheet-mode .marksheet-container { display: block !important; box-shadow: none !important; border: 2px solid #1B4D7E !important; margin: 0 auto !important; width: 100% !important; padding-top: 30px !important; }
+
+        @media print {
+            body:not(.print-marksheet-mode) { background-color: white !important; padding: 15px 0 0 0 !important; zoom: 70% !important; }
+            .no-print, .navbar-container, .title-header-container, #lockScreenOverlay { display: none !important; }
+            .grid-table th { background-color: #1B4D7E !important; color: white !important; font-size: 14px !important; padding: 6px 2px !important; border: 1.5px solid #000 !important; }
+            .grid-table td { padding: 4px 2px !important; font-size: 16px !important; font-weight: 700 !important; border: 1px solid #777 !important; }
+            input.cell-input, input.header-subject-input { border: none !important; background: transparent !important; font-size: 16px !important; font-weight: 700 !important; text-align: center; }
+        }
+
+        .meta-container { background: white; padding: 10px 12px; border-radius: 0 0 5px 5px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+        .meta-field label { display: block; font-size: 11px; font-weight: bold; color: #333; margin-bottom: 3px; text-transform: uppercase; }
+        .meta-field input { width: 100%; padding: 6px 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 12px; }
+
+        .toolbar { background: white; padding: 8px 12px; border-radius: 5px; margin-bottom: 12px; display: flex; gap: 8px; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1); flex-wrap: wrap; }
+        button, select { padding: 6px 12px; border: 1px solid #ccc; border-radius: 4px; font-weight: 600; cursor: pointer; font-size: 12px; }
+        .btn-add-stu { background-color: #1B4D7E; color: white; border:none; }
+        .btn-add-sub { background-color: #27AE60; color: white; border:none; }
+        .btn-print { background-color: #8E44AD; color: white; border:none; }
+        .btn-marksheet-print { background-color: #D35400; color: white; border:none; }
+        .btn-install-pwa { background-color: #2980b9; color: white; border:none; display:none; }
+
+        .table-responsive { width: 100%; overflow-x: auto; background: white; }
+        .grid-table { width: 100%; border-collapse: collapse; text-align: center; table-layout: fixed; }
+        .grid-table th { background-color: #1B4D7E; color: white; padding: 8px 4px; font-weight: 700; font-size: 16px; border: 1px solid #103356; }
+        .grid-table td { border: 1px solid #E2E8F0; padding: 5px; font-size: 18px; }
+        input.cell-input { width: 100%; padding: 4px 2px; border: 1px solid transparent; text-align: center; font-size: 18px; font-weight: 700; outline: none; background: transparent; }
+        input.cell-input:focus { background: #EBF8FF; border: 1px solid #3182CE; }
+
+        .calc-col { background-color: #EDF2F7; font-weight: bold; color: #1A202C; font-size: 18px; }
+        .badge-fail { color: #E74C3C; font-weight: bold; }
+        .badge-pass { color: #27AE60; font-weight: bold; }
+
+        .marksheet-container { background: #ffffff; padding: 25px 30px; border-radius: 12px; margin: 20px auto; max-width: 850px; border: 2px solid #e2e8f0; display: none; }
+        .marksheet-header { text-align: center; border-bottom: 3px double #1B4D7E; padding-bottom: 12px; margin-bottom: 15px; }
+        .student-info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: #eef2f5; padding: 10px 18px; border-radius: 8px; margin-bottom: 15px; }
+        .marksheet-table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
+        .marksheet-table th { background: #1B4D7E; color: white; padding: 8px; }
+        .marksheet-table td { border-bottom: 1px solid #e2e8f0; padding: 7px; text-align: center; }
+        .summary-box { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; background: #0f3057; padding: 10px; border-radius: 8px; color: white; text-align: center; }
+        .summary-card .value { font-size: 15px; font-weight: 800; color: #f1c40f; }
+        .signature-area { display: flex; justify-content: space-between; margin-top: 45px; }
+        .signature-line { border-top: 2px dashed #64748b; width: 140px; text-align: center; padding-top: 5px; font-size: 12px; }
+    </style>
+</head>
+<body>
+
+    <!-- LOCK SCREEN -->
+    <div id="lockScreenOverlay">
+        <div class="lock-box">
+            <h2>🔒 Software Locked</h2>
+            <p style="font-size: 12px; color: #64748b;">Enter Password to Access Result Software</p>
+            <input type="password" id="passInput" placeholder="Enter Password..." onkeyup="if(event.key==='Enter') _0xX1()">
+            <button onclick="_0xX1()">Unlock Software</button>
+            <div id="lockErrorMsg" class="lock-error">❌ Wrong Password!</div>
+        </div>
+    </div>
+
+    <!-- HEADER -->
+    <div class="title-header-container no-print">
+        <div class="permanent-software-title">
+            Academic Result Software
+            <span>SOHAG KOBIR</span>
+        </div>
+        <div class="global-search-box">
+            <input type="text" id="globalSearchInput" placeholder="🔍 Search student name..." onkeyup="_0xX2()">
+            <button onclick="_0xX2()">Search</button>
+            <div id="searchResultsPopup" class="search-results-popup"></div>
+        </div>
+    </div>
+
+    <!-- NAVBAR -->
+    <div class="navbar-container no-print">
+        <div id="yearNavbarList" class="year-navbar-list"></div>
+        <button class="btn-add-year-folder" onclick="_0xX3()">📁 ➕ New Folder</button>
+    </div>
+
+    <!-- META -->
+    <div class="meta-container no-print">
+        <div class="meta-field"><label>Institution Name</label><input type="text" id="inpInst" value="Kewa Khadizatul Kubra (RA:) Mohila Fazil Madrasha" oninput="_0xX4()"></div>
+        <div class="meta-field"><label>Exam</label><input type="text" id="inpExam" value="Half-Yearly Examination Academic Result" oninput="_0xX4()"></div>
+        <div class="meta-field"><label>Class Name</label><input type="text" id="inpClass" value="Class 1" oninput="_0xX5(this.value); _0xX4();"></div>
+    </div>
+
+    <div class="print-only-header">
+        <h2 id="dispInst"></h2><h4 id="dispExam"></h4><p id="dispClass"></p>
+    </div>
+
+    <!-- TOOLBAR -->
+    <div class="toolbar no-print">
+        <button class="btn-add-stu" onclick="_0xX6()">➕ Add Student</button>
+        <button class="btn-add-sub" onclick="_0xX7()">📚 Add Subject</button>
+        <button class="btn-print" onclick="window.print()">🖨️ Print All</button>
+        <select id="studentSelect" onchange="_0xX8()"><option value="">-- Select Student Marksheet --</option></select>
+        <button class="btn-marksheet-print" onclick="_0xX9()">📄 Print Marksheet</button>
+        <button id="pwaInstallBtn" class="btn-install-pwa">📲 Install App (Offline)</button>
+        <select id="sortFilterSelect" class="sort-select" onchange="_0xXA()">
+            <option value="default">📊 Default View</option>
+            <option value="marks_desc">1. Marks (High to Low)</option>
+            <option value="only_passed">2. Only Passed</option>
+            <option value="only_failed">3. Only Failed</option>
+            <option value="final_merit">4. Final Merit List</option>
+        </select>
+    </div>
+
+    <!-- TABLE -->
+    <div class="table-responsive main-table-view">
+        <table class="grid-table" id="resizableTable">
+            <thead><tr id="headerRow"></tr></thead>
+            <tbody id="gridBody"></tbody>
+        </table>
+    </div>
+
+    <!-- MARKSHEET -->
+    <div class="marksheet-container" id="marksheetBox">
+        <div class="marksheet-header"><h2 id="msInst"></h2><h4 id="msExam"></h4><p id="msClass"></p><h3>Academic Mark Sheet</h3></div>
+        <div class="student-info-grid"><div><strong>Name:</strong> <span id="msName"></span></div><div><strong>Roll:</strong> <span id="msRoll"></span></div></div>
+        <table class="marksheet-table"><thead><tr><th>SL</th><th>Subject</th><th>Marks</th><th>GP</th><th>Grade</th></tr></thead><tbody id="msTableBody"></tbody></table>
+        <div class="summary-box">
+            <div class="summary-card"><div class="title">Total</div><div class="value" id="msTotalMarks">0</div></div>
+            <div class="summary-card"><div class="title">GPA</div><div class="value" id="msGPA">0.00</div></div>
+            <div class="summary-card"><div class="title">Result</div><div class="value" id="msGrade">-</div></div>
+            <div class="summary-card"><div class="title">Position</div><div class="value" id="msPosition">-</div></div>
+        </div>
+        <div class="signature-area"><div class="signature-line">Class Teacher</div><div class="signature-line">Guardian</div><div class="signature-line">Principal</div></div>
+    </div>
+
+    <!-- OBFUSCATED / PROTECTED CORE LOGIC -->
+    <script>
+        /* OBFUSCATED ENCRYPTED SYSTEM CORE */
+        var _0x1a = ["1234", "sohag999", "madrasha_soft_user_pass", "madrasha_soft_master_pass", "madrasha_years_structure", "madrasha_active_year", "madrasha_active_class_id"];
+        var _0xPass = localStorage.getItem(_0x1a[2]) || _0x1a[0];
+        var _0xMaster = localStorage.getItem(_0x1a[3]) || _0x1a[1];
+
+        function _0xX1() {
+            var val = document.getElementById('passInput').value;
+            if (val === _0xPass || val === _0xMaster) {
+                document.getElementById('lockScreenOverlay').style.display = 'none';
+                document.getElementById('passInput').value = '';
+            } else {
+                document.getElementById('lockErrorMsg').style.display = 'block';
+            }
+        }
+
+        var defaultYear = [{ year: "2026", classes: Array.from({ length: 12 }, (_, i) => ({ id: `tab_2026_class_${i + 1}`, title: `Class ${i + 1}` })) }];
+        var yearsData = JSON.parse(localStorage.getItem(_0x1a[4])) || defaultYear;
+        var activeYear = localStorage.getItem(_0x1a[5]) || '2026';
+        var activeClassId = localStorage.getItem(_0x1a[6]) || 'tab_2026_class_1';
+        var subjects = [], students = [];
+
+        function _0xInit() {
+            _0xRNav();
+            _0xSwCls(activeYear, activeClassId, false);
+            _0xPWAInit();
+        }
+
+        function _0xRNav() {
+            var c = document.getElementById('yearNavbarList'); c.innerHTML = '';
+            yearsData.forEach(y => {
+                var d = document.createElement('div'); d.className = `dropdown-main ${y.year === activeYear ? 'active' : ''}`;
+                d.innerHTML = `<button class="dropbtn-year">📁 ${y.year} ▾</button>`;
+                var m = document.createElement('div'); m.className = 'dropdown-content-menu';
+                y.classes.forEach(cl => {
+                    var item = document.createElement('div'); item.className = 'folder-item';
+                    item.innerHTML = `<span>📁 ${cl.title}</span>`;
+                    item.onclick = () => _0xSwCls(y.year, cl.id);
+                    m.appendChild(item);
+                });
+                d.appendChild(m); c.appendChild(d);
+            });
+        }
+
+        function _0xSwCls(y, cId, s = true) {
+            if (s) _0xX4();
+            activeYear = y; activeClassId = cId;
+            localStorage.setItem(_0x1a[5], activeYear); localStorage.setItem(_0x1a[6], activeClassId);
+            _0xLd(); _0xRNav(); _0xXA();
+        }
+
+        function _0xX4() {
+            var d = { inst: document.getElementById('inpInst').value, exam: document.getElementById('inpExam').value, cls: document.getElementById('inpClass').value, subjects: subjects, students: students };
+            localStorage.setItem(activeClassId, JSON.stringify(d));
+        }
+
+        function _0xLd() {
+            var st = JSON.parse(localStorage.getItem(activeClassId));
+            if (!st) {
+                subjects = ["Bangla 1st", "Bangla 2nd", "English 1st", "English 2nd", "Math", "ICT"];
+                students = [{ roll: 1, name: "Student 1", marks: [85, 80, 75, 70, 90, 95] }];
+            } else {
+                subjects = st.subjects || []; students = st.students || [];
+                document.getElementById('inpInst').value = st.inst || ""; document.getElementById('inpExam').value = st.exam || ""; document.getElementById('inpClass').value = st.cls || "";
+            }
+        }
+
+        function _0xXA() {
+            _0xCalc();
+            var h = document.getElementById('headerRow');
+            var hH = `<th style="width: 60px;">Roll</th><th style="width: 190px;">Name</th>`;
+            subjects.forEach((sb, i) => { hH += `<th style="width: 95px;">${sb}</th>`; });
+            hH += `<th>Total</th><th>GPA</th><th>Grade</th><th>Pos</th><th class="no-print">Act</th>`;
+            h.innerHTML = hH;
+
+            var tb = document.getElementById('gridBody'); tb.innerHTML = '';
+            students.forEach((s, idx) => {
+                var tr = document.createElement('tr');
+                var rH = `<td><input type="text" class="cell-input" value="${s.roll}" oninput="students[${idx}].roll=this.value;_0xX4()"></td>
+                          <td><input type="text" class="cell-input" value="${s.name}" oninput="students[${idx}].name=this.value;_0xX4()"></td>`;
+                subjects.forEach((_, cI) => {
+                    rH += `<td><input type="text" class="cell-input" value="${s.marks[cI] || 0}" oninput="students[${idx}].marks[${cI}]=parseInt(this.value)||0;_0xXA()"></td>`;
+                });
+                rH += `<td class="calc-col">${s.totalMarks}</td><td class="calc-col">${s.gpa}</td><td class="calc-col">${s.grade}</td><td class="calc-col">${s.position}</td><td class="no-print"><button onclick="students.splice(${idx},1);_0xXA()">✕</button></td>`;
+                tr.innerHTML = rH; tb.appendChild(tr);
+            });
+        }
+
+        function _0xCalc() {
+            students.forEach((s) => {
+                var tot = 0, gSum = 0, fail = 0;
+                subjects.forEach((_, i) => {
+                    var m = parseInt(s.marks[i]) || 0; tot += m;
+                    var p = m < 33 ? 0 : m >= 80 ? 5 : m >= 70 ? 4 : m >= 60 ? 3.5 : m >= 50 ? 3 : m >= 40 ? 2 : 1;
+                    if (p === 0) fail++; gSum += p;
+                });
+                s.totalMarks = tot; s.failedCount = fail;
+                s.gpa = (fail > 0 || subjects.length === 0) ? "0.00" : (gSum / subjects.length).toFixed(2);
+                s.grade = fail > 0 ? "F" : s.gpa == "5.00" ? "A+" : s.gpa >= "4.00" ? "A" : "B";
+            });
+            students.sort((a,b) => b.totalMarks - a.totalMarks).forEach((s, i) => s.position = i + 1);
+            _0xPop();
+        }
+
+        function _0xPop() {
+            var d = document.getElementById('studentSelect'); d.innerHTML = '<option value="">-- Select Student Marksheet --</option>';
+            students.forEach((s, i) => { d.innerHTML += `<option value="${i}">Roll: ${s.roll} - ${s.name}</option>`; });
+        }
+
+        function _0xX8() {
+            var idx = document.getElementById('studentSelect').value;
+            var box = document.getElementById('marksheetBox');
+            if (idx === "") { box.style.display = "none"; return; }
+            var s = students[idx];
+            document.getElementById('msInst').innerText = document.getElementById('inpInst').value;
+            document.getElementById('msExam').innerText = document.getElementById('inpExam').value;
+            document.getElementById('msClass').innerText = document.getElementById('inpClass').value;
+            document.getElementById('msName').innerText = s.name; document.getElementById('msRoll').innerText = s.roll;
+            document.getElementById('msTotalMarks').innerText = s.totalMarks; document.getElementById('msGPA').innerText = s.gpa;
+            document.getElementById('msGrade').innerText = s.grade; document.getElementById('msPosition').innerText = s.position;
+
+            var tb = document.getElementById('msTableBody'); tb.innerHTML = '';
+            subjects.forEach((sub, i) => {
+                var m = s.marks[i] || 0;
+                tb.innerHTML += `<tr><td>${i+1}</td><td>${sub}</td><td>${m}</td><td>${m>=33? 'Pass':'Fail'}</td><td>${m>=80?'A+':'B'}</td></tr>`;
+            });
+            box.style.display = 'block';
+        }
+
+        function _0xX9() {
+            document.body.classList.add('print-marksheet-mode'); window.print(); document.body.classList.remove('print-marksheet-mode');
+        }
+
+        /* AUTOMATIC INLINE SERVICE WORKER & PWA REGISTRATION */
+        function _0xPWAInit() {
+            if ('serviceWorker' in navigator) {
+                var swCode = `
+                    const CACHE = 'result-soft-v1';
+                    self.addEventListener('install', e => e.waitUntil(caches.open(CACHE).then(c => c.addAll(['./']))));
+                    self.addEventListener('fetch', e => e.respondWith(caches.match(e.request).then(r => r || fetch(e.request))));
+                `;
+                var blob = new Blob([swCode], { type: 'application/javascript' });
+                var swUrl = URL.createObjectURL(blob);
+                navigator.serviceWorker.register(swUrl).catch(()=>{});
+            }
+
+            let deferredPrompt;
+            window.addEventListener('beforeinstallprompt', (e) => {
+                e.preventDefault(); deferredPrompt = e;
+                const btn = document.getElementById('pwaInstallBtn');
+                btn.style.display = 'inline-block';
+                btn.addEventListener('click', () => {
+                    btn.style.display = 'none';
+                    deferredPrompt.prompt();
+                });
+            });
+        }
+
+        _0xInit();
+    </script>
+</body>
+</html>
