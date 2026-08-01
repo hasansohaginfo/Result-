@@ -79,10 +79,17 @@
         .dropdown-main { position: relative; display: inline-block; }
         .dropbtn-year { background-color: #1B4D7E; color: white; padding: 12px 18px; font-size: 15px; font-weight: bold; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: background 0.2s; border-bottom: 3px solid transparent; }
         .dropdown-main:hover .dropbtn-year, .dropdown-main.active .dropbtn-year { background-color: #0f3057; border-bottom: 3px solid #f1c40f; }
-        .dropdown-content-menu { display: none; position: absolute; top: 100%; left: 0; background-color: #ffffff; min-width: 230px; max-height: 400px; overflow-y: auto; box-shadow: 0px 8px 16px rgba(0,0,0,0.2); z-index: 9999; border-radius: 0 0 6px 6px; border: 1px solid #cbd5e1; }
-        .dropdown-content-menu div.folder-item { color: #1e293b; padding: 10px 15px; display: flex; align-items: center; justify-content: space-between; font-size: 13px; font-weight: 600; border-bottom: 1px solid #f1f5f9; cursor: pointer; transition: background 0.2s; }
+        .dropdown-content-menu { display: none; position: absolute; top: 100%; left: 0; background-color: #ffffff; min-width: 240px; max-height: 400px; overflow-y: auto; box-shadow: 0px 8px 16px rgba(0,0,0,0.2); z-index: 9999; border-radius: 0 0 6px 6px; border: 1px solid #cbd5e1; }
+        .dropdown-content-menu div.folder-item { color: #1e293b; padding: 10px 12px; display: flex; align-items: center; justify-content: space-between; font-size: 13px; font-weight: 600; border-bottom: 1px solid #f1f5f9; cursor: pointer; transition: background 0.2s; }
         .dropdown-content-menu div.folder-item:hover { background-color: #e2e8f0; color: #1B4D7E; }
         .dropdown-content-menu div.folder-item.active-folder { background-color: #e0e7ff; color: #1B4D7E; font-weight: bold; }
+        
+        .delete-class-btn { color: #e74c3c; cursor: pointer; font-size: 12px; padding: 2px 5px; border-radius: 3px; }
+        .delete-class-btn:hover { background: #f8d7da; }
+
+        .add-class-option { padding: 10px 12px; background: #27AE60; color: white !important; text-align: center; font-weight: bold; font-size: 13px; cursor: pointer; }
+        .add-class-option:hover { background: #219653 !important; }
+
         .dropdown-main:hover .dropdown-content-menu { display: block !important; }
         .btn-add-year-folder { background-color: #27AE60; color: white; border: none; padding: 8px 14px; font-size: 13px; font-weight: bold; border-radius: 4px; cursor: pointer; display: flex; align-items: center; gap: 5px; margin-left: 10px; white-space: nowrap; }
         .btn-add-year-folder:hover { background-color: #219653; }
@@ -212,7 +219,6 @@
 
         .calc-col { background-color: #EDF2F7; font-weight: bold; color: #1A202C; font-size: 16px; }
         
-        /* IMAGE MATCHING COLOR FOR LETTER GRADES */
         .badge-fail { color: #E74C3C; font-weight: bold; }
         .badge-pass { color: #27AE60; font-weight: bold; }
 
@@ -308,7 +314,7 @@
     <!-- MAIN NAVIGATION BAR FOR MULTI-FOLDERS -->
     <div class="navbar-container no-print">
         <div id="yearNavbarList" class="year-navbar-list"></div>
-        <button class="btn-add-year-folder" onclick="addNewFolder()">📁 ➕ New Folder</button>
+        <button class="btn-add-year-folder" onclick="addNewFolder()">📁 ➕ New Year Folder</button>
     </div>
 
     <!-- META DATA -->
@@ -503,6 +509,7 @@
                 classes: Array.from({ length: 12 }, (_, i) => ({
                     id: `tab_2026_class_${i + 1}`,
                     title: `Class ${i + 1}`,
+                    className: `Class ${i + 1}`,
                     subjects: ["Bangla", "English", "Math"],
                     students: [
                         { roll: 1, name: "Student 1", marks: { 0: 80, 1: 75, 2: 90 } },
@@ -562,6 +569,7 @@
                 currentClassObj.inst = document.getElementById('inpInst').value;
                 currentClassObj.exam = document.getElementById('inpExam').value;
                 currentClassObj.className = document.getElementById('inpClass').value;
+                currentClassObj.title = document.getElementById('inpClass').value;
                 currentClassObj.subjects = subjects;
                 currentClassObj.students = students;
             }
@@ -609,6 +617,7 @@
             populateStudentDropdown();
         }
 
+        /* NAVBAR & DROPDOWN WITH ADD/DELETE CLASS OPTION */
         function renderYearNavbar() {
             let container = document.getElementById('yearNavbarList');
             container.innerHTML = '';
@@ -625,21 +634,70 @@
                 let content = document.createElement('div');
                 content.className = 'dropdown-content-menu';
 
-                yObj.classes.forEach(cObj => {
+                (yObj.classes || []).forEach(cObj => {
                     let item = document.createElement('div');
                     item.className = 'folder-item';
                     if (yObj.year === activeYear && cObj.id === activeClassId) {
                         item.classList.add('active-folder');
                     }
-                    item.innerHTML = `<span>📂 ${cObj.className || cObj.title}</span>`;
-                    item.onclick = () => switchClass(yObj.year, cObj.id);
+                    
+                    item.innerHTML = `
+                        <span onclick="switchClass('${yObj.year}', '${cObj.id}')" style="flex:1;">📂 ${cObj.className || cObj.title}</span>
+                        <span class="delete-class-btn" title="Delete Class" onclick="event.stopPropagation(); deleteClassFolder('${yObj.year}', '${cObj.id}')">🗑️</span>
+                    `;
                     content.appendChild(item);
                 });
+
+                // Add Class Button inside dropdown
+                let addClassBtn = document.createElement('div');
+                addClassBtn.className = 'add-class-option';
+                addClassBtn.innerHTML = `➕ Add New Class`;
+                addClassBtn.onclick = () => addNewClassFolder(yObj.year);
+                content.appendChild(addClassBtn);
 
                 dropdown.appendChild(btn);
                 dropdown.appendChild(content);
                 container.appendChild(dropdown);
             });
+        }
+
+        function addNewClassFolder(year) {
+            let className = prompt("Enter New Class Name (e.g. Class 13, Play, Nursery):");
+            if (!className || className.trim() === "") return;
+
+            let yObj = yearsData.find(y => y.year === year);
+            if (yObj) {
+                let newId = `tab_${year}_class_${Date.now()}`;
+                yObj.classes.push({
+                    id: newId,
+                    title: className.trim(),
+                    className: className.trim(),
+                    subjects: ["Bangla", "English", "Math"],
+                    students: []
+                });
+                switchClass(year, newId);
+            }
+        }
+
+        function deleteClassFolder(year, classId) {
+            let yObj = yearsData.find(y => y.year === year);
+            if (!yObj) return;
+
+            if (yObj.classes.length <= 1) {
+                alert("❌ Cannot delete! A year folder must contain at least one class.");
+                return;
+            }
+
+            if (confirm("⚠️ Are you sure you want to delete this Class Folder? All data inside it will be lost!")) {
+                yObj.classes = yObj.classes.filter(c => c.id !== classId);
+                
+                // If active class is deleted, switch to the first class
+                if (activeClassId === classId) {
+                    activeClassId = yObj.classes[0].id;
+                }
+
+                switchClass(year, activeClassId);
+            }
         }
 
         function addNewFolder() {
@@ -653,6 +711,7 @@
                     classes: Array.from({ length: 12 }, (_, i) => ({
                         id: `tab_${yearName}_class_${i + 1}`,
                         title: `Class ${i + 1}`,
+                        className: `Class ${i + 1}`,
                         subjects: ["Bangla", "English", "Math"],
                         students: []
                     }))
@@ -766,7 +825,7 @@
             return positions;
         }
 
-        /* RENDER TABLE WITH EXACT COLUMN MATCHING YOUR IMAGE */
+        /* RENDER TABLE */
         function renderTable() {
             let headerRow = document.getElementById('headerRow');
             let gridBody = document.getElementById('gridBody');
@@ -774,7 +833,6 @@
             headerRow.innerHTML = '';
             gridBody.innerHTML = '';
 
-            // 1. Updated Columns Header to Match Image: Total | GPA | Grade | Position
             let headers = ['Roll', 'Student Name', ...subjects, 'Total', 'GPA', 'Grade', 'Position', 'Action'];
 
             headers.forEach((h, i) => {
@@ -832,7 +890,6 @@
                 let tdTotal = `<td class="calc-col">${stats.totalMarks}</td>`;
                 let tdGPA = `<td class="calc-col">${stats.finalGPA}</td>`;
                 
-                // 2. Updated Grade display cell to match Image (Shows only Grade without 'Pass')
                 let gradeDisplay = stats.failedCount > 0 
                     ? `<span class="badge-fail">F</span>` 
                     : `<span class="badge-pass">${stats.finalGrade}</span>`;
