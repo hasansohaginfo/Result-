@@ -86,8 +86,6 @@
         .dropdown-main:hover .dropdown-content-menu { display: block !important; }
         .btn-add-year-folder { background-color: #27AE60; color: white; border: none; padding: 8px 14px; font-size: 13px; font-weight: bold; border-radius: 4px; cursor: pointer; display: flex; align-items: center; gap: 5px; margin-left: 10px; white-space: nowrap; }
         .btn-add-year-folder:hover { background-color: #219653; }
-        .btn-add-folder-green { background-color: #27AE60 !important; color: white !important; font-weight: bold !important; text-align: center; justify-content: center !important; padding: 10px 15px; cursor: pointer; }
-        .btn-add-folder-green:hover { background-color: #219653 !important; }
 
         /* PRINT SETTINGS & WATERMARK */
         body.print-marksheet-mode { background-color: white !important; padding: 0 !important; }
@@ -452,7 +450,6 @@
                 return;
             }
 
-            // Check Live Password from Firebase
             database.ref('password').once('value').then((snapshot) => {
                 const livePassword = String(snapshot.val());
 
@@ -496,13 +493,17 @@
             }
         }
 
-        // Multi-Folder Data Structure
         let defaultYearStructure = [
             {
                 year: "2026",
                 classes: Array.from({ length: 12 }, (_, i) => ({
                     id: `tab_2026_class_${i + 1}`,
-                    title: `Class ${i + 1}`
+                    title: `Class ${i + 1}`,
+                    subjects: ["Bangla", "English", "Math"],
+                    students: [
+                        { roll: 1, name: "Student 1", marks: { 0: 80, 1: 75, 2: 90 } },
+                        { roll: 2, name: "Student 2", marks: { 0: 60, 1: 55, 2: 70 } }
+                    ]
                 }))
             }
         ];
@@ -514,11 +515,9 @@
         let subjects = [];
         let students = [];
 
-        /* FIREBASE MULTI-SCHOOL REALTIME DATA SYNC */
         function loadSchoolDataFromFirebase() {
             if (!currentSchoolCode) return;
 
-            // Remove existing listener if switching
             if (firebaseListenerRef) firebaseListenerRef.off();
 
             firebaseListenerRef = database.ref('schools/' + currentSchoolCode);
@@ -543,8 +542,6 @@
 
         function saveSchoolDataToFirebase() {
             if (!currentSchoolCode) return;
-
-            // Update Current Active Class State in Local Object
             saveCurrentTabDataLocally();
 
             database.ref('schools/' + currentSchoolCode).set({
@@ -601,598 +598,347 @@
             document.getElementById('dispExam').innerText = document.getElementById('inpExam').value;
             document.getElementById('dispClass').innerText = document.getElementById('inpClass').value;
 
-            subjects = cObj.subjects || [
-                { id: 1, name: "Quran", pass: 33, fullMarks: 100 },
-                { id: 2, name: "Arabic", pass: 33, fullMarks: 100 },
-                { id: 3, name: "Bangla", pass: 33, fullMarks: 100 },
-                { id: 4, name: "English", pass: 33, fullMarks: 100 },
-                { id: 5, name: "Math", pass: 33, fullMarks: 100 }
-            ];
-
-            students = cObj.students || [
-                { id: 101, name: "Ayesha Siddiqua", roll: 1, marks: { 1: 85, 2: 78, 3: 90, 4: 82, 5: 95 } },
-                { id: 102, name: "Fatima Khatun", roll: 2, marks: { 1: 45, 2: 30, 3: 65, 4: 55, 5: 40 } }
-            ];
+            subjects = cObj.subjects || ["Bangla", "English", "Math"];
+            students = cObj.students || [];
 
             renderTable();
             populateStudentDropdown();
         }
 
-        function updateCurrentClassTitle(newTitle) {
+        function updateCurrentClassTitle(val) {
             let cObj = findClassObject(activeYear, activeClassId);
             if (cObj) {
-                cObj.title = newTitle;
+                cObj.title = val;
+                cObj.className = val;
                 renderYearNavbar();
             }
+            document.getElementById('dispClass').innerText = val;
         }
 
-        /* RENDER NAVIGATION BAR WITH MULTI-FOLDERS */
         function renderYearNavbar() {
             let container = document.getElementById('yearNavbarList');
             container.innerHTML = '';
 
             yearsData.forEach(yObj => {
-                let dropdownDiv = document.createElement('div');
-                dropdownDiv.className = `dropdown-main ${yObj.year === activeYear ? 'active' : ''}`;
+                let dropdown = document.createElement('div');
+                dropdown.className = 'dropdown-main' + (yObj.year === activeYear ? ' active' : '');
 
                 let btn = document.createElement('button');
                 btn.className = 'dropbtn-year';
-                btn.innerHTML = `📁 ${yObj.year} ▾`;
+                btn.innerHTML = `📁 Folder ${yObj.year} ▾`;
 
                 let menu = document.createElement('div');
                 menu.className = 'dropdown-content-menu';
 
-                yObj.classes.forEach(cObj => {
+                yObj.classes.forEach(c => {
                     let item = document.createElement('div');
-                    item.className = `folder-item ${(yObj.year === activeYear && cObj.id === activeClassId) ? 'active-folder' : ''}`;
-                    item.innerHTML = `
-                        <span>📁 ${cObj.title}</span>
-                        ${yObj.classes.length > 1 ? `<span style="color:#e74c3c; font-size:11px; font-weight:bold; padding:2px 5px;" onclick="deleteClassTab('${yObj.year}', '${cObj.id}', event)">✕</span>` : ''}
-                    `;
-                    item.onclick = () => switchClass(yObj.year, cObj.id);
+                    item.className = 'folder-item' + (yObj.year === activeYear && c.id === activeClassId ? ' active-folder' : '');
+                    item.innerText = c.title || c.className || c.id;
+                    item.onclick = () => switchClass(yObj.year, c.id);
                     menu.appendChild(item);
                 });
 
-                let addClassBtn = document.createElement('div');
-                addClassBtn.className = 'btn-add-folder-green';
-                addClassBtn.innerHTML = '➕ Add New Class';
-                addClassBtn.onclick = () => addNewClassTab(yObj.year);
-                menu.appendChild(addClassBtn);
-
-                if (yearsData.length > 1) {
-                    let delYearBtn = document.createElement('div');
-                    delYearBtn.style.cssText = "color:#e74c3c; text-align:center; padding:8px; font-size:11px; font-weight:bold; cursor:pointer; background:#fff0f0; border-top:1px solid #fee2e2;";
-                    delYearBtn.innerHTML = `🗑️ Delete Folder ${yObj.year}`;
-                    delYearBtn.onclick = (e) => { e.stopPropagation(); deleteYearFolder(yObj.year); };
-                    menu.appendChild(delYearBtn);
-                }
-
-                dropdownDiv.appendChild(btn);
-                dropdownDiv.appendChild(menu);
-                container.appendChild(dropdownDiv);
+                dropdown.appendChild(btn);
+                dropdown.appendChild(menu);
+                container.appendChild(dropdown);
             });
         }
 
         function addNewFolder() {
-            let folderName = prompt("Enter New Folder Name:");
-            if (!folderName) return;
+            let yearName = prompt("Enter New Folder / Year Name (e.g. 2027):");
+            if (!yearName) return;
 
-            folderName = folderName.trim();
-            if (yearsData.some(y => y.year === folderName)) {
-                alert("This Folder already exists!");
+            if (yearsData.some(y => y.year === yearName.trim())) {
+                alert("Folder already exists!");
                 return;
             }
 
-            let newFolderClasses = Array.from({ length: 12 }, (_, i) => ({
-                id: `tab_${folderName}_class_${i + 1}`,
-                title: `Class ${i + 1}`
-            }));
-
-            yearsData.push({ year: folderName, classes: newFolderClasses });
-            switchClass(folderName, newFolderClasses[0].id);
-        }
-
-        function addNewClassTab(year) {
-            let yObj = yearsData.find(y => y.year === year);
-            if (!yObj) return;
-
-            let newNum = yObj.classes.length + 1;
-            let newClass = {
-                id: `tab_${year}_class_${Date.now()}`,
-                title: `Class ${newNum}`
+            let newYearObj = {
+                year: yearName.trim(),
+                classes: Array.from({ length: 12 }, (_, i) => ({
+                    id: `tab_${yearName.trim()}_class_${i + 1}`,
+                    title: `Class ${i + 1}`,
+                    subjects: ["Bangla", "English", "Math"],
+                    students: []
+                }))
             };
 
-            yObj.classes.push(newClass);
-            switchClass(year, newClass.id);
+            yearsData.push(newYearObj);
+            switchClass(newYearObj.year, newYearObj.classes[0].id);
         }
 
-        function deleteClassTab(year, classId, e) {
-            e.stopPropagation();
-            let yObj = yearsData.find(y => y.year === year);
-            if (!yObj || yObj.classes.length <= 1) {
-                alert("Cannot delete the only class in this folder!");
-                return;
-            }
-
-            if (confirm("Are you sure you want to delete this class?")) {
-                yObj.classes = yObj.classes.filter(c => c.id !== classId);
-                if (activeClassId === classId) {
-                    switchClass(year, yObj.classes[0].id);
-                } else {
-                    renderYearNavbar();
-                    saveSchoolDataToFirebase();
-                }
-            }
-        }
-
-        function deleteYearFolder(folderName) {
-            if (confirm(`Are you sure you want to delete folder "${folderName}" and all its contents?`)) {
-                yearsData = yearsData.filter(y => y.year !== folderName);
-                if (activeYear === folderName) {
-                    activeYear = yearsData[0].year;
-                    activeClassId = yearsData[0].classes[0].id;
-                }
-                switchClass(activeYear, activeClassId);
-            }
-        }
-
-        /* CALCULATION & TABLE RENDER ENGINE */
-        function calculateGpa(marks, passMarks, fullMarks = 100) {
-            let num = parseFloat(marks);
-            let pass = parseFloat(passMarks);
-            if (isNaN(num) || num === "") return { gpa: 0.00, grade: 'F' };
-            if (num < pass) return { gpa: 0.00, grade: 'F' };
-
-            let percentage = (num / fullMarks) * 100;
-            if (percentage >= 80) return { gpa: 5.00, grade: 'A+' };
-            if (percentage >= 70) return { gpa: 4.00, grade: 'A' };
-            if (percentage >= 60) return { gpa: 3.50, grade: 'A-' };
-            if (percentage >= 50) return { gpa: 3.00, grade: 'B' };
-            if (percentage >= 40) return { gpa: 2.00, grade: 'C' };
-            if (percentage >= 33) return { gpa: 1.00, grade: 'D' };
-            return { gpa: 0.00, grade: 'F' };
-        }
-
-        function processStudentData(student) {
-            let totalMarks = 0;
-            let totalGpaSum = 0;
-            let failedCount = 0;
-
-            subjects.forEach(sub => {
-                let m = student.marks[sub.id];
-                let val = parseFloat(m);
-                if (!isNaN(val) && m !== "") {
-                    totalMarks += val;
-                    let res = calculateGpa(val, sub.pass, sub.fullMarks);
-                    totalGpaSum += res.gpa;
-                    if (res.grade === 'F') failedCount++;
-                } else {
-                    failedCount++;
-                }
-            });
-
-            let finalGpa = 0.00;
-            let finalGrade = 'F';
-
-            if (failedCount === 0 && subjects.length > 0) {
-                let avgGpa = totalGpaSum / subjects.length;
-                finalGpa = parseFloat(avgGpa.toFixed(2));
-
-                if (finalGpa >= 5.00) finalGrade = 'A+';
-                else if (finalGpa >= 4.00) finalGrade = 'A';
-                else if (finalGpa >= 3.50) finalGrade = 'A-';
-                else if (finalGpa >= 3.00) finalGrade = 'B';
-                else if (finalGpa >= 2.00) finalGrade = 'C';
-                else if (finalGpa >= 1.00) finalGrade = 'D';
-                else finalGrade = 'F';
-            }
-
-            return {
-                ...student,
-                totalMarks,
-                finalGpa: finalGpa.toFixed(2),
-                finalGrade,
-                failedCount
-            };
+        function calculateGPA(mark) {
+            let m = parseFloat(mark) || 0;
+            if (m >= 80) return { gp: 5.0, grade: "A+" };
+            if (m >= 70) return { gp: 4.0, grade: "A" };
+            if (m >= 60) return { gp: 3.5, grade: "A-" };
+            if (m >= 50) return { gp: 3.0, grade: "B" };
+            if (m >= 40) return { gp: 2.0, grade: "C" };
+            if (m >= 33) return { gp: 1.0, grade: "D" };
+            return { gp: 0.0, grade: "F" };
         }
 
         function renderTable() {
             let headerRow = document.getElementById('headerRow');
+            let gridBody = document.getElementById('gridBody');
+
             headerRow.innerHTML = '';
+            gridBody.innerHTML = '';
 
-            let thRoll = document.createElement('th');
-            thRoll.style.width = '60px';
-            thRoll.innerText = 'Roll';
-            headerRow.appendChild(thRoll);
-
-            let thName = document.createElement('th');
-            thName.style.width = '200px';
-            thName.innerText = 'Student Name';
-            headerRow.appendChild(thName);
-
-            subjects.forEach(sub => {
+            let headers = ['Roll', 'Student Name', ...subjects, 'Total Marks', 'GPA', 'Result', 'Action'];
+            headers.forEach((h, index) => {
                 let th = document.createElement('th');
-                th.style.width = '120px';
-                th.innerHTML = `
-                    <div class="header-subject-container">
-                        <input type="text" class="header-subject-input" value="${sub.name}" onchange="updateSubjectName(${sub.id}, this.value)">
-                        <button class="del-subj-btn" onclick="deleteSubject(${sub.id})" title="Delete Subject">✕</button>
-                    </div>
-                `;
+                if (index >= 2 && index < 2 + subjects.length) {
+                    let subIndex = index - 2;
+                    th.innerHTML = `
+                        <div class="header-subject-container">
+                            <input type="text" class="header-subject-input" value="${h}" onchange="updateSubjectName(${subIndex}, this.value)">
+                            <button class="del-subj-btn" onclick="deleteSubject(${subIndex})">✕</button>
+                        </div>
+                    `;
+                } else {
+                    th.innerText = h;
+                }
                 headerRow.appendChild(th);
             });
 
-            let thTotal = document.createElement('th');
-            thTotal.style.width = '90px';
-            thTotal.innerText = 'Total';
-            headerRow.appendChild(thTotal);
+            let displayStudents = [...students];
+            let filterType = document.getElementById('sortFilterSelect').value;
 
-            let thGpa = document.createElement('th');
-            thGpa.style.width = '80px';
-            thGpa.innerText = 'GPA';
-            headerRow.appendChild(thGpa);
+            displayStudents.forEach((stu, sIndex) => {
+                let totalMarks = 0;
+                let totalGP = 0;
+                let isFail = false;
+                let failCount = 0;
 
-            let thGrade = document.createElement('th');
-            thGrade.style.width = '80px';
-            thGrade.innerText = 'Grade';
-            headerRow.appendChild(thGrade);
+                subjects.forEach((_, subIdx) => {
+                    let mark = parseFloat(stu.marks ? stu.marks[subIdx] : 0) || 0;
+                    totalMarks += mark;
+                    let res = calculateGPA(mark);
+                    totalGP += res.gp;
+                    if (res.gp === 0) {
+                        isFail = true;
+                        failCount++;
+                    }
+                });
 
-            let thPos = document.createElement('th');
-            thPos.style.width = '80px';
-            thPos.innerText = 'Pos';
-            headerRow.appendChild(thPos);
-
-            let thAction = document.createElement('th');
-            thAction.className = 'no-print';
-            thAction.style.width = '50px';
-            thAction.innerText = 'Action';
-            headerRow.appendChild(thAction);
-
-            // Process calculated data
-            let processedStudents = students.map(s => processStudentData(s));
-
-            // Rank positions based on Merit (Passed students sorted by Marks)
-            let passedOnly = processedStudents.filter(s => s.failedCount === 0);
-            passedOnly.sort((a, b) => b.totalMarks - a.totalMarks);
-            let rankMap = {};
-            passedOnly.forEach((st, idx) => {
-                rankMap[st.id] = idx + 1;
+                stu._totalMarks = totalMarks;
+                stu._gpa = isFail ? 0 : (subjects.length ? (totalGP / subjects.length).toFixed(2) : 0);
+                stu._isFail = isFail;
+                stu._failCount = failCount;
             });
 
-            // Sorting Views
-            let filterVal = document.getElementById('sortFilterSelect').value;
-            let displayStudents = [...processedStudents];
-
-            if (filterVal === 'marks_desc') {
-                displayStudents.sort((a, b) => b.totalMarks - a.totalMarks);
-            } else if (filterVal === 'only_passed') {
-                displayStudents = displayStudents.filter(s => s.failedCount === 0);
-            } else if (filterVal === 'only_failed') {
-                displayStudents = displayStudents.filter(s => s.failedCount > 0);
-            } else if (filterVal === 'final_merit') {
+            if (filterType === 'marks_desc') {
+                displayStudents.sort((a, b) => b._totalMarks - a._totalMarks);
+            } else if (filterType === 'only_passed') {
+                displayStudents = displayStudents.filter(s => !s._isFail);
+            } else if (filterType === 'only_failed') {
+                displayStudents = displayStudents.filter(s => s._isFail);
+            } else if (filterType === 'final_merit') {
                 displayStudents.sort((a, b) => {
-                    if (a.failedCount !== b.failedCount) {
-                        return a.failedCount - b.failedCount;
-                    }
-                    return b.totalMarks - a.totalMarks;
+                    if (a._isFail !== b._isFail) return a._isFail ? 1 : -1;
+                    if (a._isFail && b._isFail) return a._failCount - b._failCount;
+                    return b._totalMarks - a._totalMarks;
                 });
-            } else {
-                displayStudents.sort((a, b) => a.roll - b.roll);
             }
 
-            let tbody = document.getElementById('gridBody');
-            tbody.innerHTML = '';
-
-            displayStudents.forEach(st => {
+            displayStudents.forEach((stu) => {
+                let realIndex = students.findIndex(s => s.roll === stu.roll && s.name === stu.name);
                 let tr = document.createElement('tr');
 
-                // Roll Input
-                let tdRoll = document.createElement('td');
-                tdRoll.innerHTML = `<input type="number" class="cell-input" value="${st.roll}" onchange="updateStudentField(${st.id}, 'roll', this.value)">`;
-                tr.appendChild(tdRoll);
+                tr.innerHTML = `
+                    <td><input type="number" class="cell-input" value="${stu.roll}" onchange="updateStudentRoll(${realIndex}, this.value)"></td>
+                    <td><input type="text" class="cell-input name-input" value="${stu.name}" onchange="updateStudentName(${realIndex}, this.value)"></td>
+                `;
 
-                // Name Input
-                let tdName = document.createElement('td');
-                tdName.innerHTML = `<input type="text" class="cell-input name-input" value="${st.name}" onchange="updateStudentField(${st.id}, 'name', this.value)">`;
-                tr.appendChild(tdName);
-
-                // Marks Inputs
-                subjects.forEach(sub => {
-                    let td = document.createElement('td');
-                    let markVal = st.marks[sub.id] !== undefined ? st.marks[sub.id] : "";
-                    let res = calculateGpa(markVal, sub.pass, sub.fullMarks);
-                    let textClass = (res.grade === 'F' && markVal !== "") ? 'badge-fail' : '';
-
-                    td.innerHTML = `<input type="number" class="cell-input ${textClass}" value="${markVal}" onchange="updateStudentMark(${st.id}, ${sub.id}, this.value)">`;
-                    tr.appendChild(td);
+                subjects.forEach((_, subIdx) => {
+                    let val = stu.marks ? (stu.marks[subIdx] ?? '') : '';
+                    tr.innerHTML += `<td><input type="number" class="cell-input" value="${val}" onchange="updateMark(${realIndex}, ${subIdx}, this.value)"></td>`;
                 });
 
-                // Calculated Cells
-                let tdTotal = document.createElement('td');
-                tdTotal.className = 'calc-col';
-                tdTotal.innerText = st.totalMarks;
-                tr.appendChild(tdTotal);
+                tr.innerHTML += `
+                    <td class="calc-col">${stu._totalMarks}</td>
+                    <td class="calc-col">${stu._gpa}</td>
+                    <td class="calc-col ${stu._isFail ? 'badge-fail' : 'badge-pass'}">${stu._isFail ? 'FAIL' : 'PASS'}</td>
+                    <td><button style="background:#e74c3c; color:white; border:none; padding:4px 8px; border-radius:4px;" onclick="deleteStudent(${realIndex})">🗑️</button></td>
+                `;
 
-                let tdGpa = document.createElement('td');
-                tdGpa.className = 'calc-col';
-                tdGpa.innerText = st.finalGpa;
-                tr.appendChild(tdGpa);
-
-                let tdGrade = document.createElement('td');
-                tdGrade.className = `calc-col ${st.finalGrade === 'F' ? 'badge-fail' : 'badge-pass'}`;
-                tdGrade.innerText = st.finalGrade;
-                tr.appendChild(tdGrade);
-
-                let tdPos = document.createElement('td');
-                tdPos.className = 'calc-col';
-                tdPos.innerText = rankMap[st.id] ? rankMap[st.id] : '-';
-                tr.appendChild(tdPos);
-
-                let tdDel = document.createElement('td');
-                tdDel.className = 'no-print';
-                tdDel.innerHTML = `<button style="background:none; border:none; color:#e74c3c; font-weight:bold; cursor:pointer;" onclick="deleteStudent(${st.id})">🗑️</button>`;
-                tr.appendChild(tdDel);
-
-                tbody.appendChild(tr);
+                gridBody.appendChild(tr);
             });
         }
 
-        /* STUDENT & SUBJECT OPERATIONS */
-        function addStudent() {
-            let nextRoll = students.length + 1;
-            let newStudent = {
-                id: Date.now(),
-                name: `Student ${nextRoll}`,
-                roll: nextRoll,
-                marks: {}
-            };
-
-            students.push(newStudent);
-            renderTable();
-            populateStudentDropdown();
-            saveSchoolDataToFirebase();
+        function updateSubjectName(index, val) {
+            subjects[index] = val;
+            saveCurrentTabData();
         }
 
-        function deleteStudent(id) {
-            if (confirm("Delete this student record?")) {
-                students = students.filter(s => s.id !== id);
-                renderTable();
-                populateStudentDropdown();
-                saveSchoolDataToFirebase();
-            }
-        }
-
-        function updateStudentField(id, field, value) {
-            let st = students.find(s => s.id === id);
-            if (st) {
-                st[field] = field === 'roll' ? parseInt(value) || 0 : value;
-                saveSchoolDataToFirebase();
-            }
-        }
-
-        function updateStudentMark(stId, subId, value) {
-            let st = students.find(s => s.id === stId);
-            if (st) {
-                st.marks[subId] = value;
-                renderTable();
-                saveSchoolDataToFirebase();
+        function deleteSubject(index) {
+            if (confirm("Are you sure to delete this subject?")) {
+                subjects.splice(index, 1);
+                students.forEach(s => { if (s.marks) delete s.marks[index]; });
+                saveCurrentTabData();
             }
         }
 
         function addSubject() {
-            let name = prompt("Enter Subject Name:");
-            if (!name) return;
-
-            let pass = prompt("Enter Pass Mark:", "33");
-            let full = prompt("Enter Full Mark:", "100");
-
-            let newSub = {
-                id: Date.now(),
-                name: name.trim(),
-                pass: parseInt(pass) || 33,
-                fullMarks: parseInt(full) || 100
-            };
-
-            subjects.push(newSub);
-            renderTable();
-            saveSchoolDataToFirebase();
-        }
-
-        function updateSubjectName(subId, name) {
-            let sub = subjects.find(s => s.id === subId);
-            if (sub) {
-                sub.name = name;
-                saveSchoolDataToFirebase();
+            let subName = prompt("Enter Subject Name:");
+            if (subName) {
+                subjects.push(subName.trim());
+                saveCurrentTabData();
             }
         }
 
-        function deleteSubject(subId) {
-            if (confirm("Are you sure you want to delete this subject?")) {
-                subjects = subjects.filter(s => s.id !== subId);
-                students.forEach(st => delete st.marks[subId]);
-                renderTable();
-                saveSchoolDataToFirebase();
+        function addStudent() {
+            let nextRoll = students.length ? Math.max(...students.map(s => parseInt(s.roll) || 0)) + 1 : 1;
+            students.push({ roll: nextRoll, name: `Student ${nextRoll}`, marks: {} });
+            saveCurrentTabData();
+        }
+
+        function updateStudentRoll(index, val) {
+            students[index].roll = parseInt(val) || 0;
+            saveCurrentTabData();
+        }
+
+        function updateStudentName(index, val) {
+            students[index].name = val;
+            saveCurrentTabData();
+        }
+
+        function updateMark(sIndex, subIndex, val) {
+            if (!students[sIndex].marks) students[sIndex].marks = {};
+            students[sIndex].marks[subIndex] = val !== '' ? parseFloat(val) : '';
+            saveCurrentTabData();
+        }
+
+        function deleteStudent(index) {
+            if (confirm("Delete this student?")) {
+                students.splice(index, 1);
+                saveCurrentTabData();
             }
         }
 
         function clearData() {
-            if (confirm("Are you sure you want to reset all students and marks for this current class?")) {
+            if (confirm("Are you sure to clear current class data?")) {
                 students = [];
-                renderTable();
-                populateStudentDropdown();
-                saveSchoolDataToFirebase();
+                saveCurrentTabData();
             }
         }
 
-        /* INDIVIDUAL MARKSHEET GENERATION */
         function populateStudentDropdown() {
             let select = document.getElementById('studentSelect');
             select.innerHTML = '<option value="">-- Select Student Marksheet --</option>';
-
-            students.sort((a, b) => a.roll - b.roll).forEach(st => {
-                let opt = document.createElement('option');
-                opt.value = st.id;
-                opt.innerText = `Roll ${st.roll} - ${st.name}`;
-                select.appendChild(opt);
+            students.forEach((s, idx) => {
+                select.innerHTML += `<option value="${idx}">Roll ${s.roll} - ${s.name}</option>`;
             });
         }
 
         function renderIndividualMarksheet() {
-            let stId = parseInt(document.getElementById('studentSelect').value);
+            let idx = document.getElementById('studentSelect').value;
             let box = document.getElementById('marksheetBox');
+            if (idx === '') { box.style.display = 'none'; return; }
 
-            if (!stId) {
-                box.style.display = 'none';
-                return;
-            }
-
-            let processedStudents = students.map(s => processStudentData(s));
-            let passedOnly = processedStudents.filter(s => s.failedCount === 0);
-            passedOnly.sort((a, b) => b.totalMarks - a.totalMarks);
-
-            let rankMap = {};
-            passedOnly.forEach((st, idx) => { rankMap[st.id] = idx + 1; });
-
-            let st = processedStudents.find(s => s.id === stId);
-            if (!st) return;
-
+            let stu = students[idx];
             document.getElementById('msInst').innerText = document.getElementById('inpInst').value;
             document.getElementById('msExam').innerText = document.getElementById('inpExam').value;
             document.getElementById('msClass').innerText = document.getElementById('inpClass').value;
 
-            document.getElementById('msName').innerText = st.name;
-            document.getElementById('msRoll').innerText = st.roll;
+            document.getElementById('msName').innerText = stu.name;
+            document.getElementById('msRoll').innerText = stu.roll;
 
             let tbody = document.getElementById('msTableBody');
             tbody.innerHTML = '';
 
-            subjects.forEach((sub, idx) => {
-                let markVal = st.marks[sub.id] !== undefined ? st.marks[sub.id] : "";
-                let res = calculateGpa(markVal, sub.pass, sub.fullMarks);
+            let totalMarks = 0;
+            let totalGP = 0;
+            let isFail = false;
 
-                let tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${idx + 1}</td>
-                    <td style="text-align:left; padding-left:20px;">${sub.name}</td>
-                    <td>${markVal !== "" ? markVal : '-'}</td>
-                    <td>${res.gpa.toFixed(2)}</td>
-                    <td><span class="grade-pill ${res.grade === 'F' ? 'fail' : 'pass'}">${res.grade}</span></td>
+            subjects.forEach((sub, sIdx) => {
+                let mark = parseFloat(stu.marks ? stu.marks[sIdx] : 0) || 0;
+                totalMarks += mark;
+                let res = calculateGPA(mark);
+                totalGP += res.gp;
+                if (res.gp === 0) isFail = true;
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${sIdx + 1}</td>
+                        <td style="text-align:left; padding-left:20px;">${sub}</td>
+                        <td>${mark}</td>
+                        <td>${res.gp.toFixed(2)}</td>
+                        <td>${res.grade}</td>
+                    </tr>
                 `;
-                tbody.appendChild(tr);
             });
 
-            document.getElementById('msTotalMarks').innerText = st.totalMarks;
-            document.getElementById('msGPA').innerText = st.finalGpa;
-            document.getElementById('msGrade').innerText = st.finalGrade;
-            document.getElementById('msPosition').innerText = rankMap[st.id] ? rankMap[st.id] : 'Failed / N/A';
+            document.getElementById('msTotalMarks').innerText = totalMarks;
+            document.getElementById('msGPA').innerText = isFail ? "0.00" : (subjects.length ? (totalGP / subjects.length).toFixed(2) : "0.00");
+            document.getElementById('msGrade').innerText = isFail ? "FAILED" : "PASSED";
+
+            let rankList = [...students].map(s => {
+                let tm = 0, fail = false;
+                subjects.forEach((_, i) => {
+                    let m = parseFloat(s.marks ? s.marks[i] : 0) || 0;
+                    tm += m;
+                    if (calculateGPA(m).gp === 0) fail = true;
+                });
+                return { roll: s.roll, tm, fail };
+            }).sort((a,b) => a.fail !== b.fail ? (a.fail ? 1 : -1) : b.tm - a.tm);
+
+            let pos = rankList.findIndex(r => r.roll === stu.roll) + 1;
+            document.getElementById('msPosition').innerText = pos ? pos : '-';
 
             box.style.display = 'block';
         }
 
         function printIndividualMarksheet() {
-            let stId = document.getElementById('studentSelect').value;
-            if (!stId) {
-                alert("Please select a student first!");
-                return;
-            }
-
+            let idx = document.getElementById('studentSelect').value;
+            if (idx === '') { alert("Please select a student first!"); return; }
             document.body.classList.add('print-marksheet-mode');
             window.print();
-
-            setTimeout(() => {
-                document.body.classList.remove('print-marksheet-mode');
-            }, 1000);
+            document.body.classList.remove('print-marksheet-mode');
         }
 
-        /* SEARCH SYSTEM & KEYBOARD NAVIGATION */
         function performGlobalSearch() {
-            let query = document.getElementById('globalSearchInput').value.trim().toLowerCase();
+            let q = document.getElementById('globalSearchInput').value.trim().toLowerCase();
             let popup = document.getElementById('searchResultsPopup');
             popup.innerHTML = '';
 
-            if (query === '') {
-                popup.style.display = 'none';
-                return;
-            }
+            if (!q) { popup.style.display = 'none'; return; }
 
             let results = [];
-
-            yearsData.forEach(yObj => {
-                yObj.classes.forEach(cObj => {
-                    let stList = cObj.students || [];
-                    stList.forEach(st => {
-                        if (st.name.toLowerCase().includes(query) || String(st.roll) === query) {
-                            results.push({
-                                year: yObj.year,
-                                classId: cObj.id,
-                                classTitle: cObj.title,
-                                studentName: st.name,
-                                roll: st.roll,
-                                studentId: st.id
-                            });
-                        }
-                    });
+            yearsData.forEach(y => {
+                y.classes.forEach(c => {
+                    if (c.students) {
+                        c.students.forEach(s => {
+                            if (s.name.toLowerCase().includes(q) || String(s.roll).includes(q)) {
+                                results.push({ year: y.year, classId: c.id, className: c.title || c.className, student: s });
+                            }
+                        });
+                    }
                 });
             });
 
             if (results.length === 0) {
-                popup.innerHTML = '<div style="padding:10px; font-size:12px; color:#777; text-align:center;">No student found!</div>';
+                popup.innerHTML = '<div style="padding:10px; font-size:12px; color:#666;">No student found</div>';
             } else {
-                results.forEach(res => {
-                    let item = document.createElement('div');
-                    item.className = 'search-item';
-                    item.innerHTML = `
+                results.forEach(r => {
+                    let div = document.createElement('div');
+                    div.className = 'search-item';
+                    div.innerHTML = `
                         <div class="search-item-info">
-                            <strong>${res.studentName}</strong> (Roll: ${res.roll})
+                            <strong>${r.student.name}</strong> (Roll: ${r.student.roll})
                         </div>
-                        <span class="search-item-class">${res.year} - ${res.classTitle}</span>
+                        <span class="search-item-class">${r.year} - ${r.className}</span>
                     `;
-                    item.onclick = () => {
-                        switchClass(res.year, res.classId);
-                        document.getElementById('studentSelect').value = res.studentId;
-                        renderIndividualMarksheet();
+                    div.onclick = () => {
+                        switchClass(r.year, r.classId);
                         popup.style.display = 'none';
                         document.getElementById('globalSearchInput').value = '';
                     };
-                    popup.appendChild(item);
+                    popup.appendChild(div);
                 });
             }
-
             popup.style.display = 'block';
-        }
-
-        function attachGlobalKeyboardNavigation() {
-            document.addEventListener('keydown', function (e) {
-                if (e.target.tagName === 'INPUT' && e.target.classList.contains('cell-input')) {
-                    let td = e.target.closest('td');
-                    let tr = td.parentElement;
-                    let colIndex = Array.from(tr.children).indexOf(td);
-                    let targetInput = null;
-
-                    if (e.key === 'ArrowDown') {
-                        let nextTr = tr.nextElementSibling;
-                        if (nextTr && nextTr.children[colIndex]) {
-                            targetInput = nextTr.children[colIndex].querySelector('input');
-                        }
-                    } else if (e.key === 'ArrowUp') {
-                        let prevTr = tr.previousElementSibling;
-                        if (prevTr && prevTr.children[colIndex]) {
-                            targetInput = prevTr.children[colIndex].querySelector('input');
-                        }
-                    } else if (e.key === 'Enter') {
-                        e.preventDefault();
-                        let nextTr = tr.nextElementSibling;
-                        if (nextTr && nextTr.children[colIndex]) {
-                            targetInput = nextTr.children[colIndex].querySelector('input');
-                        }
-                    }
-
-                    if (targetInput) {
-                        targetInput.focus();
-                        targetInput.select();
-                    }
-                }
-            });
         }
     </script>
 </body>
