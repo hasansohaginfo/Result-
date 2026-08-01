@@ -73,7 +73,7 @@
         .search-item-info strong { color: #1B4D7E; }
         .search-item-class { font-size: 11px; background: #e2e8f0; padding: 2px 6px; border-radius: 4px; font-weight: bold; }
 
-        /* ORIGINAL NAVBAR & MULTI-FOLDER MENU */
+        /* NAVBAR & MULTI-FOLDER MENU */
         .navbar-container { background: #1B4D7E; padding: 0 10px; border-radius: 6px 6px 0 0; display: flex; align-items: center; border-bottom: 3px solid #0f3057; margin-bottom: 15px; gap: 5px; position: relative; z-index: 100; }
         .year-navbar-list { display: flex; align-items: center; gap: 5px; }
         .dropdown-main { position: relative; display: inline-block; }
@@ -87,7 +87,7 @@
         .btn-add-year-folder { background-color: #27AE60; color: white; border: none; padding: 8px 14px; font-size: 13px; font-weight: bold; border-radius: 4px; cursor: pointer; display: flex; align-items: center; gap: 5px; margin-left: 10px; white-space: nowrap; }
         .btn-add-year-folder:hover { background-color: #219653; }
 
-        /* PRINT SETTINGS & WATERMARK */
+        /* PRINT SETTINGS */
         body.print-marksheet-mode { background-color: white !important; padding: 0 !important; }
         body.print-marksheet-mode .main-table-view,
         body.print-marksheet-mode .no-print,
@@ -166,7 +166,7 @@
 
             input.cell-input, input.header-subject-input { border: none !important; background: transparent !important; font-size: 16px !important; font-weight: 700 !important; padding: 0 !important; text-align: center; }
             input.name-input { text-align: left !important; }
-            .del-subj-btn { display: none !important; }
+            .del-subj-btn, .resizer { display: none !important; }
 
             * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
         }
@@ -190,10 +190,16 @@
         
         .sort-select { background-color: #2c3e50; color: white; border: 1px solid #1a252f; font-weight: bold; }
 
-        /* ORIGINAL TABLE DESIGN & SIZES */
+        /* EXCEL-STYLE RESIZABLE TABLE & DESIGN */
         .table-responsive { width: 100%; overflow-x: auto; background: white; }
         .grid-table { width: 100%; border-collapse: collapse; text-align: center; table-layout: fixed; }
         .grid-table th { background-color: #1B4D7E; color: white; padding: 8px 4px; font-weight: 700; font-size: 15px; border: 1px solid #103356; white-space: nowrap; position: relative; user-select: none; }
+
+        /* COLUMN RESIZER BAR (EXCEL FEATURE) */
+        .resizer {
+            position: absolute; right: 0; top: 0; width: 5px; cursor: col-resize; user-select: none; height: 100%; background: transparent; z-index: 10;
+        }
+        .resizer:hover, .resizing { background: #f1c40f; width: 6px; }
 
         .header-subject-container { display: flex; align-items: center; justify-content: center; gap: 2px; width: 100%; overflow: hidden; }
         input.header-subject-input { background: transparent; border: none; color: white; font-weight: 700; text-align: center; font-size: 15px; width: 100%; outline: none; }
@@ -202,14 +208,14 @@
         .grid-table td { border: 1px solid #E2E8F0; padding: 5px; overflow: hidden; font-size: 16px; }
         .grid-table tr:nth-child(even) { background-color: #F8FAFC; }
         input.cell-input { width: 100%; padding: 4px 2px; border: 1px solid transparent; text-align: center; font-size: 16px; font-weight: 700; outline: none; background: transparent; }
-        input.cell-input:focus { background: #EBF8FF; border: 1px solid #3182CE; }
+        input.cell-input:focus { background: #EBF8FF; border: 2px solid #3182CE; border-radius: 2px; }
         input.name-input { text-align: left; padding-left: 6px; font-weight: 700; color: #2c3e50; }
 
         .calc-col { background-color: #EDF2F7; font-weight: bold; color: #1A202C; font-size: 16px; }
         .badge-fail { color: #E74C3C; font-weight: bold; }
         .badge-pass { color: #27AE60; font-weight: bold; }
 
-        /* MARKSHEET ORIGINAL CLASSIC STYLES */
+        /* MARKSHEET STYLES */
         .marksheet-container { 
             background: #ffffff; 
             padding: 25px 30px; 
@@ -270,7 +276,7 @@
 
     <div class="print-watermark-top">Academic Result Software by SOHAG KOBIR</div>
 
-    <!-- PASSWORD & SCHOOL CODE LOCK OVERLAY -->
+    <!-- LOCK SCREEN OVERLAY -->
     <div id="lockScreenOverlay">
         <div class="lock-box">
             <h2>🔒 Software Login</h2>
@@ -284,7 +290,7 @@
         </div>
     </div>
 
-    <!-- TITLE & GLOBAL SEARCH CONTAINER -->
+    <!-- HEADER CONTAINER -->
     <div class="title-header-container no-print">
         <div class="permanent-software-title">
             Academic Result Software
@@ -320,14 +326,14 @@
         </div>
     </div>
 
-    <!-- PRINT HEADER FOR TABULAR SHEET -->
+    <!-- PRINT HEADER -->
     <div class="print-only-header">
         <h2 id="dispInst">Institution Name</h2>
         <h4 id="dispExam">Exam Name</h4>
         <p id="dispClass">Class Name</p>
     </div>
 
-    <!-- TOOLBAR WITH SORTING / FILTER -->
+    <!-- TOOLBAR -->
     <div class="toolbar no-print">
         <button class="btn-add-stu" onclick="addStudent()">➕ Add Student</button>
         <button class="btn-add-sub" onclick="addSubject()">📚 Add Subject</button>
@@ -351,7 +357,7 @@
         </select>
     </div>
 
-    <!-- RESULT TABLE -->
+    <!-- RESULT TABLE WITH EXCEL DRAG & KEYBOARD NAV -->
     <div class="table-responsive main-table-view">
         <table class="grid-table" id="resizableTable">
             <thead>
@@ -400,7 +406,7 @@
                 <div class="value" id="msGPA">0.00</div>
             </div>
             <div class="summary-card">
-                <div class="title">Result</div>
+                <div class="title">Result / Grade</div>
                 <div class="value" id="msGrade">-</div>
             </div>
             <div class="summary-card">
@@ -436,7 +442,6 @@
         let currentSchoolCode = "";
         let firebaseListenerRef = null;
 
-        /* REALTIME FIREBASE AUTHENTICATION & MULTI-SCHOOL LOCK */
         function checkPassword() {
             let passInput = document.getElementById('passInput').value;
             let codeInput = document.getElementById('schoolCodeInput').value.trim().toUpperCase();
@@ -676,6 +681,7 @@
             return { gp: 0.0, grade: "F" };
         }
 
+        /* RENDER TABLE WITH TOTAL, GPA, GRADE, POSITION & KEYBOARD NAV */
         function renderTable() {
             let headerRow = document.getElementById('headerRow');
             let gridBody = document.getElementById('gridBody');
@@ -683,9 +689,12 @@
             headerRow.innerHTML = '';
             gridBody.innerHTML = '';
 
-            let headers = ['Roll', 'Student Name', ...subjects, 'Total Marks', 'GPA', 'Result', 'Action'];
+            // 4 CALCULATION COLUMNS: TOTAL, GPA, GRADE, POSITION
+            let headers = ['Roll', 'Student Name', ...subjects, 'Total Marks', 'GPA', 'Grade', 'Position', 'Action'];
+            
             headers.forEach((h, index) => {
                 let th = document.createElement('th');
+                
                 if (index >= 2 && index < 2 + subjects.length) {
                     let subIndex = index - 2;
                     th.innerHTML = `
@@ -697,7 +706,46 @@
                 } else {
                     th.innerText = h;
                 }
+
+                // Add Excel column resizer bar
+                let resizer = document.createElement('div');
+                resizer.className = 'resizer';
+                th.appendChild(resizer);
+                enableColumnResize(th, resizer);
+
                 headerRow.appendChild(th);
+            });
+
+            // Calculate Position (Merit Rank) for all students first
+            let studentRanks = [...students].map(s => {
+                let totalMarks = 0;
+                let totalGP = 0;
+                let isFail = false;
+                let failCount = 0;
+
+                subjects.forEach((_, subIdx) => {
+                    let mark = parseFloat(s.marks ? s.marks[subIdx] : 0) || 0;
+                    totalMarks += mark;
+                    let res = calculateGPA(mark);
+                    totalGP += res.gp;
+                    if (res.gp === 0) { isFail = true; failCount++; }
+                });
+
+                return {
+                    roll: s.roll,
+                    name: s.name,
+                    totalMarks,
+                    gpa: isFail ? 0 : (subjects.length ? (totalGP / subjects.length).toFixed(2) : 0),
+                    isFail,
+                    failCount
+                };
+            });
+
+            // Sort rank list (Passed first, then highest marks)
+            studentRanks.sort((a, b) => {
+                if (a.isFail !== b.isFail) return a.isFail ? 1 : -1;
+                if (a.isFail && b.isFail) return a.failCount - b.failCount;
+                return b.totalMarks - a.totalMarks;
             });
 
             let displayStudents = [...students];
@@ -714,16 +762,17 @@
                     totalMarks += mark;
                     let res = calculateGPA(mark);
                     totalGP += res.gp;
-                    if (res.gp === 0) {
-                        isFail = true;
-                        failCount++;
-                    }
+                    if (res.gp === 0) { isFail = true; failCount++; }
                 });
 
                 stu._totalMarks = totalMarks;
-                stu._gpa = isFail ? 0 : (subjects.length ? (totalGP / subjects.length).toFixed(2) : 0);
+                stu._gpa = isFail ? "0.00" : (subjects.length ? (totalGP / subjects.length).toFixed(2) : "0.00");
                 stu._isFail = isFail;
                 stu._failCount = failCount;
+                
+                // Position number calculation
+                let posIndex = studentRanks.findIndex(r => r.roll === stu.roll && r.name === stu.name);
+                stu._position = posIndex !== -1 ? posIndex + 1 : '-';
             });
 
             if (filterType === 'marks_desc') {
@@ -740,28 +789,99 @@
                 });
             }
 
-            displayStudents.forEach((stu) => {
+            displayStudents.forEach((stu, rIdx) => {
                 let realIndex = students.findIndex(s => s.roll === stu.roll && s.name === stu.name);
                 let tr = document.createElement('tr');
 
                 tr.innerHTML = `
-                    <td><input type="number" class="cell-input" value="${stu.roll}" onchange="updateStudentRoll(${realIndex}, this.value)"></td>
-                    <td><input type="text" class="cell-input name-input" value="${stu.name}" onchange="updateStudentName(${realIndex}, this.value)"></td>
+                    <td><input type="number" class="cell-input" data-row="${rIdx}" data-col="0" value="${stu.roll}" onchange="updateStudentRoll(${realIndex}, this.value)"></td>
+                    <td><input type="text" class="cell-input name-input" data-row="${rIdx}" data-col="1" value="${stu.name}" onchange="updateStudentName(${realIndex}, this.value)"></td>
                 `;
 
                 subjects.forEach((_, subIdx) => {
                     let val = stu.marks ? (stu.marks[subIdx] ?? '') : '';
-                    tr.innerHTML += `<td><input type="number" class="cell-input" value="${val}" onchange="updateMark(${realIndex}, ${subIdx}, this.value)"></td>`;
+                    let colIdx = 2 + subIdx;
+                    tr.innerHTML += `<td><input type="number" class="cell-input" data-row="${rIdx}" data-col="${colIdx}" value="${val}" onchange="updateMark(${realIndex}, ${subIdx}, this.value)"></td>`;
                 });
 
                 tr.innerHTML += `
                     <td class="calc-col">${stu._totalMarks}</td>
                     <td class="calc-col">${stu._gpa}</td>
                     <td class="calc-col ${stu._isFail ? 'badge-fail' : 'badge-pass'}">${stu._isFail ? 'FAIL' : 'PASS'}</td>
+                    <td class="calc-col" style="color:#1B4D7E; font-weight:800;">${stu._position}</td>
                     <td><button style="background:#e74c3c; color:white; border:none; padding:4px 8px; border-radius:4px;" onclick="deleteStudent(${realIndex})">🗑️</button></td>
                 `;
 
                 gridBody.appendChild(tr);
+            });
+
+            // Attach Arrow Key navigation
+            attachKeyboardNavigation();
+        }
+
+        /* 1. EXCEL-STYLE COLUMN RESIZING SCRIPT */
+        function enableColumnResize(th, resizer) {
+            let x = 0;
+            let w = 0;
+
+            const mouseDownHandler = function (e) {
+                x = e.clientX;
+                const styles = window.getComputedStyle(th);
+                w = parseInt(styles.width, 10);
+
+                document.addEventListener('mousemove', mouseMoveHandler);
+                document.addEventListener('mouseup', mouseUpHandler);
+                resizer.classList.add('resizing');
+            };
+
+            const mouseMoveHandler = function (e) {
+                const dx = e.clientX - x;
+                th.style.width = `${w + dx}px`;
+            };
+
+            const mouseUpHandler = function () {
+                document.removeEventListener('mousemove', mouseMoveHandler);
+                document.removeEventListener('mouseup', mouseUpHandler);
+                resizer.classList.remove('resizing');
+            };
+
+            resizer.addEventListener('mousedown', mouseDownHandler);
+        }
+
+        /* 2. ARROW KEYS & ENTER KEYBOARD NAVIGATION */
+        function attachKeyboardNavigation() {
+            let inputs = document.querySelectorAll('.grid-table input.cell-input');
+
+            inputs.forEach(input => {
+                input.addEventListener('keydown', function (e) {
+                    let row = parseInt(this.getAttribute('data-row'));
+                    let col = parseInt(this.getAttribute('data-col'));
+
+                    let nextInput = null;
+
+                    if (e.key === 'ArrowDown' || e.key === 'Enter' || e.key === 'PageDown') {
+                        e.preventDefault();
+                        nextInput = document.querySelector(`input[data-row="${row + 1}"][data-col="${col}"]`);
+                    } else if (e.key === 'ArrowUp' || e.key === 'PageUp') {
+                        e.preventDefault();
+                        nextInput = document.querySelector(`input[data-row="${row - 1}"][data-col="${col}"]`);
+                    } else if (e.key === 'ArrowRight') {
+                        // Move right only if cursor is at the end of text
+                        if (this.selectionEnd === this.value.length) {
+                            nextInput = document.querySelector(`input[data-row="${row}"][data-col="${col + 1}"]`);
+                        }
+                    } else if (e.key === 'ArrowLeft') {
+                        // Move left only if cursor is at start
+                        if (this.selectionStart === 0) {
+                            nextInput = document.querySelector(`input[data-row="${row}"][data-col="${col - 1}"]`);
+                        }
+                    }
+
+                    if (nextInput) {
+                        nextInput.focus();
+                        nextInput.select(); // Highlight text for quick editing
+                    }
+                });
             });
         }
 
