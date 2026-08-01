@@ -17,7 +17,7 @@
         * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { margin: 0; padding: 15px; background-color: #f4f6f9; color: #222; font-size: 15px; position: relative; }
 
-        /* PASSWORD LOCK SCREEN OVERLAY */
+        /* PASSWORD & SCHOOL CODE LOCK SCREEN OVERLAY */
         #lockScreenOverlay {
             position: fixed;
             top: 0;
@@ -38,14 +38,14 @@
             border-radius: 12px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.3);
             text-align: center;
-            max-width: 380px;
+            max-width: 400px;
             width: 90%;
         }
 
         .lock-box h2 { margin-top: 0; color: #1B4D7E; font-size: 20px; text-transform: uppercase; }
-        .lock-box input { width: 100%; padding: 10px; margin: 15px 0; border: 2px solid #cbd5e1; border-radius: 6px; font-size: 16px; text-align: center; outline: none; }
+        .lock-box input { width: 100%; padding: 10px; margin: 8px 0; border: 2px solid #cbd5e1; border-radius: 6px; font-size: 15px; text-align: center; outline: none; }
         .lock-box input:focus { border-color: #1B4D7E; }
-        .lock-box button { width: 100%; background: #1B4D7E; color: white; padding: 10px; border: none; border-radius: 6px; font-size: 15px; font-weight: bold; cursor: pointer; }
+        .lock-box button { width: 100%; background: #1B4D7E; color: white; padding: 11px; border: none; border-radius: 6px; font-size: 15px; font-weight: bold; cursor: pointer; margin-top: 10px; }
         .lock-box button:hover { background: #0f3057; }
         .lock-error { color: #e74c3c; font-weight: bold; font-size: 13px; margin-top: 10px; display: none; }
 
@@ -58,6 +58,8 @@
 
         .permanent-software-title { font-size: 18px; font-weight: 800; letter-spacing: 0.5px; color: #1B4D7E; text-transform: uppercase; margin: 0; }
         .permanent-software-title span { display: block; font-size: 13px; color: #7f8c8d; font-weight: 600; margin-top: 3px; letter-spacing: 1px; }
+
+        .school-tag-badge { background: #e0e7ff; color: #1B4D7E; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: bold; }
 
         .global-search-box { display: flex; align-items: center; gap: 5px; position: relative; }
         .global-search-box input { padding: 8px 12px; border: 2px solid #1B4D7E; border-radius: 20px; font-size: 13px; outline: none; width: 220px; transition: width 0.3s ease; }
@@ -113,7 +115,6 @@
 
         .print-only-header { display: none; }
 
-        /* TOP CENTER WATERMARK STYLING */
         .print-watermark-top {
             display: none;
             text-align: center;
@@ -124,32 +125,12 @@
             text-transform: uppercase;
         }
 
-        /* Combined Sheet Watermark */
-        body > .print-watermark-top {
-            position: absolute;
-            top: 2px;
-            left: 0;
-            width: 100%;
-            z-index: 9999;
-        }
-
-        /* Marksheet Internal Watermark */
-        .marksheet-container .print-watermark-top {
-            position: absolute;
-            top: 6px;
-            left: 0;
-            width: 100%;
-            z-index: 10;
-        }
+        body > .print-watermark-top { position: absolute; top: 2px; left: 0; width: 100%; z-index: 9999; }
+        .marksheet-container .print-watermark-top { position: absolute; top: 6px; left: 0; width: 100%; z-index: 10; }
 
         @media print {
             @page { size: landscape; margin: 4mm; }
-
-            /* Combined print view: show body watermark */
-            body:not(.print-marksheet-mode) > .print-watermark-top {
-                display: block !important;
-            }
-
+            body:not(.print-marksheet-mode) > .print-watermark-top { display: block !important; }
             body:not(.print-marksheet-mode) { 
                 background-color: white !important;
                 padding: 15px 0 0 0 !important;
@@ -159,17 +140,8 @@
                 print-color-adjust: exact !important; 
             }
 
-            /* Marksheet print view: hide body watermark, show marksheet watermark */
-            body.print-marksheet-mode > .print-watermark-top {
-                display: none !important;
-            }
-
-            body.print-marksheet-mode {
-                padding: 0 !important;
-                margin: 0 !important;
-                overflow: hidden !important;
-            }
-
+            body.print-marksheet-mode > .print-watermark-top { display: none !important; }
+            body.print-marksheet-mode { padding: 0 !important; margin: 0 !important; overflow: hidden !important; }
             body.print-marksheet-mode .marksheet-container {
                 page-break-inside: avoid !important;
                 page-break-after: avoid !important;
@@ -179,13 +151,7 @@
                 box-sizing: border-box !important;
             }
 
-            body.print-marksheet-mode .marksheet-container .print-watermark-top {
-                display: block !important;
-                top: 8px !important;
-                font-size: 10px !important;
-                color: #555555 !important;
-            }
-
+            body.print-marksheet-mode .marksheet-container .print-watermark-top { display: block !important; top: 8px !important; font-size: 10px !important; color: #555555 !important; }
             body:not(.print-marksheet-mode) .marksheet-container { display: none !important; }
             .no-print, .navbar-container, .title-header-container, #lockScreenOverlay { display: none !important; }
             .table-responsive { overflow: visible !important; width: 100% !important; }
@@ -237,7 +203,6 @@
         input.header-subject-input { background: transparent; border: none; color: white; font-weight: 700; text-align: center; font-size: 16px; width: 100%; outline: none; }
         .del-subj-btn { background: rgba(255,255,255,0.2); color: white; border: none; border-radius: 50%; width: 16px; height: 16px; font-size: 9px; cursor: pointer; padding: 0; flex-shrink: 0; }
 
-        /* INCREASED FONT SIZES FOR CELLS & INPUTS */
         .grid-table td { border: 1px solid #E2E8F0; padding: 5px; overflow: hidden; font-size: 18px; }
         .grid-table tr:nth-child(even) { background-color: #F8FAFC; }
         input.cell-input { width: 100%; padding: 4px 2px; border: 1px solid transparent; text-align: center; font-size: 18px; font-weight: 700; outline: none; background: transparent; }
@@ -296,10 +261,6 @@
         .marksheet-table td:last-child { border-right: none; }
         .marksheet-table tbody tr:nth-child(even) { background-color: #f8fafc; }
 
-        .grade-pill { display: inline-block; padding: 2px 8px; border-radius: 12px; font-weight: 800; font-size: 12px; }
-        .grade-pill.pass { background-color: #e6f4ea; color: #137333; border: 1px solid #ceead6; }
-        .grade-pill.fail { background-color: #fce8e6; color: #c5221f; border: 1px solid #fad2cf; }
-
         .summary-box { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; background: linear-gradient(135deg, #0f3057 0%, #1B4D7E 100%); padding: 10px; border-radius: 8px; color: white; text-align: center; box-shadow: 0 4px 10px rgba(15, 48, 87, 0.2); }
         .summary-card { background: rgba(255, 255, 255, 0.1); padding: 6px 4px; border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.15); }
         .summary-card .title { font-size: 10px; text-transform: uppercase; color: #cbd5e1; letter-spacing: 0.5px; margin-bottom: 2px; }
@@ -311,17 +272,19 @@
 </head>
 <body>
 
-    <!-- TOP CENTER WATERMARK FOR COMBINE TABULAR PRINT -->
     <div class="print-watermark-top">Academic Result Software by SOHAG KOBIR</div>
 
-    <!-- PASSWORD LOCK OVERLAY -->
+    <!-- PASSWORD & SCHOOL CODE LOCK OVERLAY -->
     <div id="lockScreenOverlay">
         <div class="lock-box">
-            <h2>🔒 Software Locked</h2>
-            <p style="font-size: 12px; color: #64748b; margin-bottom: 10px;">Enter Password to Access Result Software</p>
-            <input type="password" id="passInput" placeholder="Enter Password..." onkeyup="if(event.key === 'Enter') checkPassword()">
+            <h2>🔒 Software Login</h2>
+            <p style="font-size: 12px; color: #64748b; margin-bottom: 12px;">Enter Password and Institute Code to Connect</p>
+            
+            <input type="password" id="passInput" placeholder="Password..." onkeyup="if(event.key === 'Enter') checkPassword()">
+            <input type="text" id="schoolCodeInput" placeholder="Institute Code (e.g. KEWA101)" style="text-transform:uppercase;" onkeyup="if(event.key === 'Enter') checkPassword()">
+            
             <button onclick="checkPassword()">Unlock Software</button>
-            <div id="lockErrorMsg" class="lock-error">❌ Wrong Password! Try Again.</div>
+            <div id="lockErrorMsg" class="lock-error">❌ Wrong Credentials! Try Again.</div>
         </div>
     </div>
 
@@ -329,10 +292,9 @@
     <div class="title-header-container no-print">
         <div class="permanent-software-title">
             Academic Result Software
-            <span>SOHAG KOBIR</span>
+            <span>SOHAG KOBIR <span id="displaySchoolCodeBadge" class="school-tag-badge">CODE: -</span></span>
         </div>
         
-        <!-- SEARCH BOX RIGHT CORNER -->
         <div class="global-search-box">
             <input type="text" id="globalSearchInput" placeholder="🔍 Search student name..." onkeyup="performGlobalSearch()">
             <button onclick="performGlobalSearch()">Search</button>
@@ -384,7 +346,6 @@
 
         <button class="btn-clear" onclick="clearData()">🗑️ Reset Class Data</button>
 
-        <!-- SORTING DROPDOWN -->
         <select id="sortFilterSelect" class="sort-select" onchange="renderTable()">
             <option value="default">📊 Default View (By Roll)</option>
             <option value="marks_desc">1. Marks (High to Low)</option>
@@ -406,8 +367,6 @@
 
     <!-- INDIVIDUAL MARKSHEET -->
     <div class="marksheet-container" id="marksheetBox">
-        
-        <!-- TOP CENTER WATERMARK FOR MARKSHEET -->
         <div class="print-watermark-top">Academic Result Software by SOHAG KOBIR</div>
 
         <div class="marksheet-header">
@@ -474,32 +433,36 @@
             measurementId: "G-S74NRCKJX5"
         };
 
-        // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
         let DEFAULT_MASTER_PASS = "sohag999";  
-        let savedMasterPass = localStorage.getItem('madrasha_soft_master_pass') || DEFAULT_MASTER_PASS;
+        let currentSchoolCode = "";
+        let firebaseListenerRef = null;
 
-        /* REALTIME FIREBASE PASSWORD LOCK SYSTEM */
+        /* REALTIME FIREBASE AUTHENTICATION & MULTI-SCHOOL LOCK */
         function checkPassword() {
-            let input = document.getElementById('passInput').value;
+            let passInput = document.getElementById('passInput').value;
+            let codeInput = document.getElementById('schoolCodeInput').value.trim().toUpperCase();
             let err = document.getElementById('lockErrorMsg');
 
-            // 1. Check Master Admin Password locally
-            if (input === savedMasterPass) {
-                unlockSoftware();
+            if (!codeInput) {
+                err.innerText = "⚠️ Please enter an Institute Code!";
+                err.style.display = 'block';
                 return;
             }
 
-            // 2. Fetch Live Password from Firebase Realtime Database
+            // Check Live Password from Firebase
             database.ref('password').once('value').then((snapshot) => {
-                const livePassword = snapshot.val();
+                const livePassword = String(snapshot.val());
 
-                if (input === String(livePassword)) {
+                if (passInput === livePassword || passInput === DEFAULT_MASTER_PASS) {
+                    currentSchoolCode = codeInput;
+                    document.getElementById('displaySchoolCodeBadge').innerText = "CODE: " + currentSchoolCode;
                     unlockSoftware();
+                    loadSchoolDataFromFirebase();
                 } else {
-                    err.innerText = "❌ Wrong Password! Try Again.";
+                    err.innerText = "❌ Incorrect Password! Try Again.";
                     err.style.display = 'block';
                 }
             }).catch((error) => {
@@ -512,24 +475,23 @@
         function unlockSoftware() {
             document.getElementById('lockScreenOverlay').style.display = 'none';
             document.getElementById('passInput').value = '';
+            document.getElementById('schoolCodeInput').value = '';
             document.getElementById('lockErrorMsg').style.display = 'none';
         }
 
         function changePassword() {
             let masterCheck = prompt("🔒 Enter Master Password to authorize password change:");
-            
-            if (masterCheck !== savedMasterPass) {
+            if (masterCheck !== DEFAULT_MASTER_PASS) {
                 alert("❌ Access Denied! Only Master Admin can change the password.");
                 return;
             }
 
             let newPass = prompt("🔑 Enter New User Password:");
             if (newPass && newPass.trim() !== '') {
-                // Update Password directly in Firebase Realtime Database
                 database.ref('password').set(newPass.trim()).then(() => {
-                    alert("✅ Live Password changed successfully in Firebase!");
-                }).catch((error) => {
-                    alert("❌ Failed to update password in Firebase!");
+                    alert("✅ Live Password changed successfully!");
+                }).catch(() => {
+                    alert("❌ Failed to update password!");
                 });
             }
         }
@@ -545,23 +507,123 @@
             }
         ];
 
-        let yearsData = JSON.parse(localStorage.getItem('madrasha_years_structure')) || defaultYearStructure;
-        let activeYear = localStorage.getItem('madrasha_active_year') || '2026';
-        let activeClassId = localStorage.getItem('madrasha_active_class_id') || 'tab_2026_class_1';
+        let yearsData = defaultYearStructure;
+        let activeYear = '2026';
+        let activeClassId = 'tab_2026_class_1';
 
         let subjects = [];
         let students = [];
 
-        function initApp() {
-            renderYearNavbar();
-            switchClass(activeYear, activeClassId, false);
-            attachGlobalKeyboardNavigation();
-            
-            document.addEventListener('click', function(e) {
-                if (!e.target.closest('.global-search-box')) {
-                    document.getElementById('searchResultsPopup').style.display = 'none';
+        /* FIREBASE MULTI-SCHOOL REALTIME DATA SYNC */
+        function loadSchoolDataFromFirebase() {
+            if (!currentSchoolCode) return;
+
+            // Remove existing listener if switching
+            if (firebaseListenerRef) firebaseListenerRef.off();
+
+            firebaseListenerRef = database.ref('schools/' + currentSchoolCode);
+            firebaseListenerRef.on('value', (snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    yearsData = data.yearsData || defaultYearStructure;
+                    if (data.activeYear) activeYear = data.activeYear;
+                    if (data.activeClassId) activeClassId = data.activeClassId;
+
+                    renderYearNavbar();
+                    loadClassDataFromState();
+                } else {
+                    yearsData = defaultYearStructure;
+                    activeYear = '2026';
+                    activeClassId = 'tab_2026_class_1';
+                    renderYearNavbar();
+                    saveSchoolDataToFirebase();
                 }
             });
+        }
+
+        function saveSchoolDataToFirebase() {
+            if (!currentSchoolCode) return;
+
+            // Update Current Active Class State in Local Object
+            saveCurrentTabDataLocally();
+
+            database.ref('schools/' + currentSchoolCode).set({
+                yearsData: yearsData,
+                activeYear: activeYear,
+                activeClassId: activeClassId,
+                lastUpdated: Date.now()
+            });
+        }
+
+        function saveCurrentTabDataLocally() {
+            let currentClassObj = findClassObject(activeYear, activeClassId);
+            if (currentClassObj) {
+                currentClassObj.inst = document.getElementById('inpInst').value;
+                currentClassObj.exam = document.getElementById('inpExam').value;
+                currentClassObj.className = document.getElementById('inpClass').value;
+                currentClassObj.subjects = subjects;
+                currentClassObj.students = students;
+            }
+        }
+
+        function saveCurrentTabData() {
+            saveSchoolDataToFirebase();
+        }
+
+        function findClassObject(year, classId) {
+            let yObj = yearsData.find(y => y.year === year);
+            if (yObj) {
+                return yObj.classes.find(c => c.id === classId);
+            }
+            return null;
+        }
+
+        function switchClass(year, classId, autoSave = true) {
+            if (autoSave) saveCurrentTabDataLocally();
+
+            activeYear = year;
+            activeClassId = classId;
+
+            renderYearNavbar();
+            loadClassDataFromState();
+            saveSchoolDataToFirebase();
+        }
+
+        function loadClassDataFromState() {
+            let cObj = findClassObject(activeYear, activeClassId);
+            if (!cObj) return;
+
+            document.getElementById('inpInst').value = cObj.inst || "Kewa Khadizatul Kubra (RA:) Mohila Fazil Madrasha";
+            document.getElementById('inpExam').value = cObj.exam || "Half-Yearly Examination Academic Result";
+            document.getElementById('inpClass').value = cObj.className || cObj.title || "Class 1";
+
+            document.getElementById('dispInst').innerText = document.getElementById('inpInst').value;
+            document.getElementById('dispExam').innerText = document.getElementById('inpExam').value;
+            document.getElementById('dispClass').innerText = document.getElementById('inpClass').value;
+
+            subjects = cObj.subjects || [
+                { id: 1, name: "Quran", pass: 33, fullMarks: 100 },
+                { id: 2, name: "Arabic", pass: 33, fullMarks: 100 },
+                { id: 3, name: "Bangla", pass: 33, fullMarks: 100 },
+                { id: 4, name: "English", pass: 33, fullMarks: 100 },
+                { id: 5, name: "Math", pass: 33, fullMarks: 100 }
+            ];
+
+            students = cObj.students || [
+                { id: 101, name: "Ayesha Siddiqua", roll: 1, marks: { 1: 85, 2: 78, 3: 90, 4: 82, 5: 95 } },
+                { id: 102, name: "Fatima Khatun", roll: 2, marks: { 1: 45, 2: 30, 3: 65, 4: 55, 5: 40 } }
+            ];
+
+            renderTable();
+            populateStudentDropdown();
+        }
+
+        function updateCurrentClassTitle(newTitle) {
+            let cObj = findClassObject(activeYear, activeClassId);
+            if (cObj) {
+                cObj.title = newTitle;
+                renderYearNavbar();
+            }
         }
 
         /* RENDER NAVIGATION BAR WITH MULTI-FOLDERS */
@@ -627,16 +689,45 @@
             }));
 
             yearsData.push({ year: folderName, classes: newFolderClasses });
-
-            localStorage.setItem('madrasha_years_structure', JSON.stringify(yearsData));
             switchClass(folderName, newFolderClasses[0].id);
+        }
+
+        function addNewClassTab(year) {
+            let yObj = yearsData.find(y => y.year === year);
+            if (!yObj) return;
+
+            let newNum = yObj.classes.length + 1;
+            let newClass = {
+                id: `tab_${year}_class_${Date.now()}`,
+                title: `Class ${newNum}`
+            };
+
+            yObj.classes.push(newClass);
+            switchClass(year, newClass.id);
+        }
+
+        function deleteClassTab(year, classId, e) {
+            e.stopPropagation();
+            let yObj = yearsData.find(y => y.year === year);
+            if (!yObj || yObj.classes.length <= 1) {
+                alert("Cannot delete the only class in this folder!");
+                return;
+            }
+
+            if (confirm("Are you sure you want to delete this class?")) {
+                yObj.classes = yObj.classes.filter(c => c.id !== classId);
+                if (activeClassId === classId) {
+                    switchClass(year, yObj.classes[0].id);
+                } else {
+                    renderYearNavbar();
+                    saveSchoolDataToFirebase();
+                }
+            }
         }
 
         function deleteYearFolder(folderName) {
             if (confirm(`Are you sure you want to delete folder "${folderName}" and all its contents?`)) {
                 yearsData = yearsData.filter(y => y.year !== folderName);
-                localStorage.setItem('madrasha_years_structure', JSON.stringify(yearsData));
-                
                 if (activeYear === folderName) {
                     activeYear = yearsData[0].year;
                     activeClassId = yearsData[0].classes[0].id;
@@ -645,8 +736,464 @@
             }
         }
 
-        // Initialize App on Page Load
-        window.onload = initApp;
+        /* CALCULATION & TABLE RENDER ENGINE */
+        function calculateGpa(marks, passMarks, fullMarks = 100) {
+            let num = parseFloat(marks);
+            let pass = parseFloat(passMarks);
+            if (isNaN(num) || num === "") return { gpa: 0.00, grade: 'F' };
+            if (num < pass) return { gpa: 0.00, grade: 'F' };
+
+            let percentage = (num / fullMarks) * 100;
+            if (percentage >= 80) return { gpa: 5.00, grade: 'A+' };
+            if (percentage >= 70) return { gpa: 4.00, grade: 'A' };
+            if (percentage >= 60) return { gpa: 3.50, grade: 'A-' };
+            if (percentage >= 50) return { gpa: 3.00, grade: 'B' };
+            if (percentage >= 40) return { gpa: 2.00, grade: 'C' };
+            if (percentage >= 33) return { gpa: 1.00, grade: 'D' };
+            return { gpa: 0.00, grade: 'F' };
+        }
+
+        function processStudentData(student) {
+            let totalMarks = 0;
+            let totalGpaSum = 0;
+            let failedCount = 0;
+
+            subjects.forEach(sub => {
+                let m = student.marks[sub.id];
+                let val = parseFloat(m);
+                if (!isNaN(val) && m !== "") {
+                    totalMarks += val;
+                    let res = calculateGpa(val, sub.pass, sub.fullMarks);
+                    totalGpaSum += res.gpa;
+                    if (res.grade === 'F') failedCount++;
+                } else {
+                    failedCount++;
+                }
+            });
+
+            let finalGpa = 0.00;
+            let finalGrade = 'F';
+
+            if (failedCount === 0 && subjects.length > 0) {
+                let avgGpa = totalGpaSum / subjects.length;
+                finalGpa = parseFloat(avgGpa.toFixed(2));
+
+                if (finalGpa >= 5.00) finalGrade = 'A+';
+                else if (finalGpa >= 4.00) finalGrade = 'A';
+                else if (finalGpa >= 3.50) finalGrade = 'A-';
+                else if (finalGpa >= 3.00) finalGrade = 'B';
+                else if (finalGpa >= 2.00) finalGrade = 'C';
+                else if (finalGpa >= 1.00) finalGrade = 'D';
+                else finalGrade = 'F';
+            }
+
+            return {
+                ...student,
+                totalMarks,
+                finalGpa: finalGpa.toFixed(2),
+                finalGrade,
+                failedCount
+            };
+        }
+
+        function renderTable() {
+            let headerRow = document.getElementById('headerRow');
+            headerRow.innerHTML = '';
+
+            let thRoll = document.createElement('th');
+            thRoll.style.width = '60px';
+            thRoll.innerText = 'Roll';
+            headerRow.appendChild(thRoll);
+
+            let thName = document.createElement('th');
+            thName.style.width = '200px';
+            thName.innerText = 'Student Name';
+            headerRow.appendChild(thName);
+
+            subjects.forEach(sub => {
+                let th = document.createElement('th');
+                th.style.width = '120px';
+                th.innerHTML = `
+                    <div class="header-subject-container">
+                        <input type="text" class="header-subject-input" value="${sub.name}" onchange="updateSubjectName(${sub.id}, this.value)">
+                        <button class="del-subj-btn" onclick="deleteSubject(${sub.id})" title="Delete Subject">✕</button>
+                    </div>
+                `;
+                headerRow.appendChild(th);
+            });
+
+            let thTotal = document.createElement('th');
+            thTotal.style.width = '90px';
+            thTotal.innerText = 'Total';
+            headerRow.appendChild(thTotal);
+
+            let thGpa = document.createElement('th');
+            thGpa.style.width = '80px';
+            thGpa.innerText = 'GPA';
+            headerRow.appendChild(thGpa);
+
+            let thGrade = document.createElement('th');
+            thGrade.style.width = '80px';
+            thGrade.innerText = 'Grade';
+            headerRow.appendChild(thGrade);
+
+            let thPos = document.createElement('th');
+            thPos.style.width = '80px';
+            thPos.innerText = 'Pos';
+            headerRow.appendChild(thPos);
+
+            let thAction = document.createElement('th');
+            thAction.className = 'no-print';
+            thAction.style.width = '50px';
+            thAction.innerText = 'Action';
+            headerRow.appendChild(thAction);
+
+            // Process calculated data
+            let processedStudents = students.map(s => processStudentData(s));
+
+            // Rank positions based on Merit (Passed students sorted by Marks)
+            let passedOnly = processedStudents.filter(s => s.failedCount === 0);
+            passedOnly.sort((a, b) => b.totalMarks - a.totalMarks);
+            let rankMap = {};
+            passedOnly.forEach((st, idx) => {
+                rankMap[st.id] = idx + 1;
+            });
+
+            // Sorting Views
+            let filterVal = document.getElementById('sortFilterSelect').value;
+            let displayStudents = [...processedStudents];
+
+            if (filterVal === 'marks_desc') {
+                displayStudents.sort((a, b) => b.totalMarks - a.totalMarks);
+            } else if (filterVal === 'only_passed') {
+                displayStudents = displayStudents.filter(s => s.failedCount === 0);
+            } else if (filterVal === 'only_failed') {
+                displayStudents = displayStudents.filter(s => s.failedCount > 0);
+            } else if (filterVal === 'final_merit') {
+                displayStudents.sort((a, b) => {
+                    if (a.failedCount !== b.failedCount) {
+                        return a.failedCount - b.failedCount;
+                    }
+                    return b.totalMarks - a.totalMarks;
+                });
+            } else {
+                displayStudents.sort((a, b) => a.roll - b.roll);
+            }
+
+            let tbody = document.getElementById('gridBody');
+            tbody.innerHTML = '';
+
+            displayStudents.forEach(st => {
+                let tr = document.createElement('tr');
+
+                // Roll Input
+                let tdRoll = document.createElement('td');
+                tdRoll.innerHTML = `<input type="number" class="cell-input" value="${st.roll}" onchange="updateStudentField(${st.id}, 'roll', this.value)">`;
+                tr.appendChild(tdRoll);
+
+                // Name Input
+                let tdName = document.createElement('td');
+                tdName.innerHTML = `<input type="text" class="cell-input name-input" value="${st.name}" onchange="updateStudentField(${st.id}, 'name', this.value)">`;
+                tr.appendChild(tdName);
+
+                // Marks Inputs
+                subjects.forEach(sub => {
+                    let td = document.createElement('td');
+                    let markVal = st.marks[sub.id] !== undefined ? st.marks[sub.id] : "";
+                    let res = calculateGpa(markVal, sub.pass, sub.fullMarks);
+                    let textClass = (res.grade === 'F' && markVal !== "") ? 'badge-fail' : '';
+
+                    td.innerHTML = `<input type="number" class="cell-input ${textClass}" value="${markVal}" onchange="updateStudentMark(${st.id}, ${sub.id}, this.value)">`;
+                    tr.appendChild(td);
+                });
+
+                // Calculated Cells
+                let tdTotal = document.createElement('td');
+                tdTotal.className = 'calc-col';
+                tdTotal.innerText = st.totalMarks;
+                tr.appendChild(tdTotal);
+
+                let tdGpa = document.createElement('td');
+                tdGpa.className = 'calc-col';
+                tdGpa.innerText = st.finalGpa;
+                tr.appendChild(tdGpa);
+
+                let tdGrade = document.createElement('td');
+                tdGrade.className = `calc-col ${st.finalGrade === 'F' ? 'badge-fail' : 'badge-pass'}`;
+                tdGrade.innerText = st.finalGrade;
+                tr.appendChild(tdGrade);
+
+                let tdPos = document.createElement('td');
+                tdPos.className = 'calc-col';
+                tdPos.innerText = rankMap[st.id] ? rankMap[st.id] : '-';
+                tr.appendChild(tdPos);
+
+                let tdDel = document.createElement('td');
+                tdDel.className = 'no-print';
+                tdDel.innerHTML = `<button style="background:none; border:none; color:#e74c3c; font-weight:bold; cursor:pointer;" onclick="deleteStudent(${st.id})">🗑️</button>`;
+                tr.appendChild(tdDel);
+
+                tbody.appendChild(tr);
+            });
+        }
+
+        /* STUDENT & SUBJECT OPERATIONS */
+        function addStudent() {
+            let nextRoll = students.length + 1;
+            let newStudent = {
+                id: Date.now(),
+                name: `Student ${nextRoll}`,
+                roll: nextRoll,
+                marks: {}
+            };
+
+            students.push(newStudent);
+            renderTable();
+            populateStudentDropdown();
+            saveSchoolDataToFirebase();
+        }
+
+        function deleteStudent(id) {
+            if (confirm("Delete this student record?")) {
+                students = students.filter(s => s.id !== id);
+                renderTable();
+                populateStudentDropdown();
+                saveSchoolDataToFirebase();
+            }
+        }
+
+        function updateStudentField(id, field, value) {
+            let st = students.find(s => s.id === id);
+            if (st) {
+                st[field] = field === 'roll' ? parseInt(value) || 0 : value;
+                saveSchoolDataToFirebase();
+            }
+        }
+
+        function updateStudentMark(stId, subId, value) {
+            let st = students.find(s => s.id === stId);
+            if (st) {
+                st.marks[subId] = value;
+                renderTable();
+                saveSchoolDataToFirebase();
+            }
+        }
+
+        function addSubject() {
+            let name = prompt("Enter Subject Name:");
+            if (!name) return;
+
+            let pass = prompt("Enter Pass Mark:", "33");
+            let full = prompt("Enter Full Mark:", "100");
+
+            let newSub = {
+                id: Date.now(),
+                name: name.trim(),
+                pass: parseInt(pass) || 33,
+                fullMarks: parseInt(full) || 100
+            };
+
+            subjects.push(newSub);
+            renderTable();
+            saveSchoolDataToFirebase();
+        }
+
+        function updateSubjectName(subId, name) {
+            let sub = subjects.find(s => s.id === subId);
+            if (sub) {
+                sub.name = name;
+                saveSchoolDataToFirebase();
+            }
+        }
+
+        function deleteSubject(subId) {
+            if (confirm("Are you sure you want to delete this subject?")) {
+                subjects = subjects.filter(s => s.id !== subId);
+                students.forEach(st => delete st.marks[subId]);
+                renderTable();
+                saveSchoolDataToFirebase();
+            }
+        }
+
+        function clearData() {
+            if (confirm("Are you sure you want to reset all students and marks for this current class?")) {
+                students = [];
+                renderTable();
+                populateStudentDropdown();
+                saveSchoolDataToFirebase();
+            }
+        }
+
+        /* INDIVIDUAL MARKSHEET GENERATION */
+        function populateStudentDropdown() {
+            let select = document.getElementById('studentSelect');
+            select.innerHTML = '<option value="">-- Select Student Marksheet --</option>';
+
+            students.sort((a, b) => a.roll - b.roll).forEach(st => {
+                let opt = document.createElement('option');
+                opt.value = st.id;
+                opt.innerText = `Roll ${st.roll} - ${st.name}`;
+                select.appendChild(opt);
+            });
+        }
+
+        function renderIndividualMarksheet() {
+            let stId = parseInt(document.getElementById('studentSelect').value);
+            let box = document.getElementById('marksheetBox');
+
+            if (!stId) {
+                box.style.display = 'none';
+                return;
+            }
+
+            let processedStudents = students.map(s => processStudentData(s));
+            let passedOnly = processedStudents.filter(s => s.failedCount === 0);
+            passedOnly.sort((a, b) => b.totalMarks - a.totalMarks);
+
+            let rankMap = {};
+            passedOnly.forEach((st, idx) => { rankMap[st.id] = idx + 1; });
+
+            let st = processedStudents.find(s => s.id === stId);
+            if (!st) return;
+
+            document.getElementById('msInst').innerText = document.getElementById('inpInst').value;
+            document.getElementById('msExam').innerText = document.getElementById('inpExam').value;
+            document.getElementById('msClass').innerText = document.getElementById('inpClass').value;
+
+            document.getElementById('msName').innerText = st.name;
+            document.getElementById('msRoll').innerText = st.roll;
+
+            let tbody = document.getElementById('msTableBody');
+            tbody.innerHTML = '';
+
+            subjects.forEach((sub, idx) => {
+                let markVal = st.marks[sub.id] !== undefined ? st.marks[sub.id] : "";
+                let res = calculateGpa(markVal, sub.pass, sub.fullMarks);
+
+                let tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${idx + 1}</td>
+                    <td style="text-align:left; padding-left:20px;">${sub.name}</td>
+                    <td>${markVal !== "" ? markVal : '-'}</td>
+                    <td>${res.gpa.toFixed(2)}</td>
+                    <td><span class="grade-pill ${res.grade === 'F' ? 'fail' : 'pass'}">${res.grade}</span></td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('msTotalMarks').innerText = st.totalMarks;
+            document.getElementById('msGPA').innerText = st.finalGpa;
+            document.getElementById('msGrade').innerText = st.finalGrade;
+            document.getElementById('msPosition').innerText = rankMap[st.id] ? rankMap[st.id] : 'Failed / N/A';
+
+            box.style.display = 'block';
+        }
+
+        function printIndividualMarksheet() {
+            let stId = document.getElementById('studentSelect').value;
+            if (!stId) {
+                alert("Please select a student first!");
+                return;
+            }
+
+            document.body.classList.add('print-marksheet-mode');
+            window.print();
+
+            setTimeout(() => {
+                document.body.classList.remove('print-marksheet-mode');
+            }, 1000);
+        }
+
+        /* SEARCH SYSTEM & KEYBOARD NAVIGATION */
+        function performGlobalSearch() {
+            let query = document.getElementById('globalSearchInput').value.trim().toLowerCase();
+            let popup = document.getElementById('searchResultsPopup');
+            popup.innerHTML = '';
+
+            if (query === '') {
+                popup.style.display = 'none';
+                return;
+            }
+
+            let results = [];
+
+            yearsData.forEach(yObj => {
+                yObj.classes.forEach(cObj => {
+                    let stList = cObj.students || [];
+                    stList.forEach(st => {
+                        if (st.name.toLowerCase().includes(query) || String(st.roll) === query) {
+                            results.push({
+                                year: yObj.year,
+                                classId: cObj.id,
+                                classTitle: cObj.title,
+                                studentName: st.name,
+                                roll: st.roll,
+                                studentId: st.id
+                            });
+                        }
+                    });
+                });
+            });
+
+            if (results.length === 0) {
+                popup.innerHTML = '<div style="padding:10px; font-size:12px; color:#777; text-align:center;">No student found!</div>';
+            } else {
+                results.forEach(res => {
+                    let item = document.createElement('div');
+                    item.className = 'search-item';
+                    item.innerHTML = `
+                        <div class="search-item-info">
+                            <strong>${res.studentName}</strong> (Roll: ${res.roll})
+                        </div>
+                        <span class="search-item-class">${res.year} - ${res.classTitle}</span>
+                    `;
+                    item.onclick = () => {
+                        switchClass(res.year, res.classId);
+                        document.getElementById('studentSelect').value = res.studentId;
+                        renderIndividualMarksheet();
+                        popup.style.display = 'none';
+                        document.getElementById('globalSearchInput').value = '';
+                    };
+                    popup.appendChild(item);
+                });
+            }
+
+            popup.style.display = 'block';
+        }
+
+        function attachGlobalKeyboardNavigation() {
+            document.addEventListener('keydown', function (e) {
+                if (e.target.tagName === 'INPUT' && e.target.classList.contains('cell-input')) {
+                    let td = e.target.closest('td');
+                    let tr = td.parentElement;
+                    let colIndex = Array.from(tr.children).indexOf(td);
+                    let targetInput = null;
+
+                    if (e.key === 'ArrowDown') {
+                        let nextTr = tr.nextElementSibling;
+                        if (nextTr && nextTr.children[colIndex]) {
+                            targetInput = nextTr.children[colIndex].querySelector('input');
+                        }
+                    } else if (e.key === 'ArrowUp') {
+                        let prevTr = tr.previousElementSibling;
+                        if (prevTr && prevTr.children[colIndex]) {
+                            targetInput = prevTr.children[colIndex].querySelector('input');
+                        }
+                    } else if (e.key === 'Enter') {
+                        e.preventDefault();
+                        let nextTr = tr.nextElementSibling;
+                        if (nextTr && nextTr.children[colIndex]) {
+                            targetInput = nextTr.children[colIndex].querySelector('input');
+                        }
+                    }
+
+                    if (targetInput) {
+                        targetInput.focus();
+                        targetInput.select();
+                    }
+                }
+            });
+        }
     </script>
 </body>
 </html>
