@@ -9,6 +9,10 @@
     <link rel="manifest" href="./manifest.json">
     <meta name="theme-color" content="#1B4D7E">
 
+    <!-- Firebase SDK Libraries (HTML Compatible) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
     <style>
         * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { margin: 0; padding: 15px; background-color: #f4f6f9; color: #222; font-size: 15px; position: relative; }
@@ -458,32 +462,57 @@
     </div>
 
     <script>
-        /* MASTER & USER PASSWORD LOCK SYSTEM LOGIC */
-        let DEFAULT_USER_PASS = "2345";        
-        let DEFAULT_MASTER_PASS = "sohag999";  
-        async function getRealPassword() {
-  try {
-    let res = await fetch('https://raw.githubusercontent.com/hasansohaginfo/Result-/main/password.txt?t=' + Date.now());
-    return (await res.text()).trim();
-  } catch (e) {
-    return "1234";
-  }
-}
+        /* FIREBASE CONFIGURATION & REALTIME DATABASE SETUP */
+        const firebaseConfig = {
+            apiKey: "AIzaSyAaTEOAekrmhO8O6FVausjXk8MOpLnqXRE",
+            authDomain: "resultapp-44bb9.firebaseapp.com",
+            databaseURL: "https://resultapp-44bb9-default-rtdb.firebaseio.com",
+            projectId: "resultapp-44bb9",
+            storageBucket: "resultapp-44bb9.firebasestorage.app",
+            messagingSenderId: "988832907640",
+            appId: "1:988832907640:web:f888a6acec5d8416e5088d",
+            measurementId: "G-S74NRCKJX5"
+        };
 
-        let savedUserPass = localStorage.getItem('madrasha_soft_user_pass') || DEFAULT_USER_PASS;
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        let DEFAULT_MASTER_PASS = "sohag999";  
         let savedMasterPass = localStorage.getItem('madrasha_soft_master_pass') || DEFAULT_MASTER_PASS;
 
+        /* REALTIME FIREBASE PASSWORD LOCK SYSTEM */
         function checkPassword() {
             let input = document.getElementById('passInput').value;
             let err = document.getElementById('lockErrorMsg');
 
-            if (input === savedUserPass || input === savedMasterPass) {
-                document.getElementById('lockScreenOverlay').style.display = 'none';
-                document.getElementById('passInput').value = '';
-                err.style.display = 'none';
-            } else {
-                err.style.display = 'block';
+            // 1. Check Master Admin Password locally
+            if (input === savedMasterPass) {
+                unlockSoftware();
+                return;
             }
+
+            // 2. Fetch Live Password from Firebase Realtime Database
+            database.ref('password').once('value').then((snapshot) => {
+                const livePassword = snapshot.val();
+
+                if (input === String(livePassword)) {
+                    unlockSoftware();
+                } else {
+                    err.innerText = "❌ Wrong Password! Try Again.";
+                    err.style.display = 'block';
+                }
+            }).catch((error) => {
+                console.error("Firebase Connection Error:", error);
+                err.innerText = "⚠️ Network Error! Check Internet Connection.";
+                err.style.display = 'block';
+            });
+        }
+
+        function unlockSoftware() {
+            document.getElementById('lockScreenOverlay').style.display = 'none';
+            document.getElementById('passInput').value = '';
+            document.getElementById('lockErrorMsg').style.display = 'none';
         }
 
         function changePassword() {
@@ -496,9 +525,12 @@
 
             let newPass = prompt("🔑 Enter New User Password:");
             if (newPass && newPass.trim() !== '') {
-                savedUserPass = newPass.trim();
-                localStorage.setItem('madrasha_soft_user_pass', savedUserPass);
-                alert("✅ User Password changed successfully!");
+                // Update Password directly in Firebase Realtime Database
+                database.ref('password').set(newPass.trim()).then(() => {
+                    alert("✅ Live Password changed successfully in Firebase!");
+                }).catch((error) => {
+                    alert("❌ Failed to update password in Firebase!");
+                });
             }
         }
 
@@ -609,587 +641,12 @@
                     activeYear = yearsData[0].year;
                     activeClassId = yearsData[0].classes[0].id;
                 }
-                switchClass(activeYear, activeClassId, false);
+                switchClass(activeYear, activeClassId);
             }
         }
 
-        function switchClass(year, classId, savePrevious = true) {
-            if (savePrevious) saveCurrentTabData();
-
-            activeYear = year;
-            activeClassId = classId;
-
-            localStorage.setItem('madrasha_active_year', activeYear);
-            localStorage.setItem('madrasha_active_class_id', activeClassId);
-
-            loadCurrentTabData();
-            renderYearNavbar();
-            renderTable();
-            document.getElementById('marksheetBox').style.display = 'none';
-        }
-
-        function addNewClassTab(year) {
-            let yearObj = yearsData.find(y => y.year === year);
-            if (!yearObj) return;
-
-            let className = prompt("Enter New Class Name:", `Class ${yearObj.classes.length + 1}`);
-            if (!className) return;
-
-            let newId = `tab_${year}_${Date.now()}`;
-            yearObj.classes.push({ id: newId, title: className });
-
-            let defaultSubjects = ["Bangla", "English", "Math", "ICT", "Science"];
-            let defaultStudents = [
-                { roll: 1, name: "Student A", marks: [80, 75, 90, 85, 88] }
-            ];
-
-            let metaData = {
-                inst: document.getElementById('inpInst').value,
-                exam: `Academic Examination ${year}`,
-                cls: className,
-                subjects: defaultSubjects,
-                students: defaultStudents
-            };
-
-            localStorage.setItem(newId, JSON.stringify(metaData));
-            localStorage.setItem('madrasha_years_structure', JSON.stringify(yearsData));
-
-            switchClass(year, newId);
-        }
-
-        function deleteClassTab(year, classId, event) {
-            event.stopPropagation();
-            let yearObj = yearsData.find(y => y.year === year);
-            if (!yearObj) return;
-
-            if (yearObj.classes.length <= 1) {
-                return alert("At least one class item must remain inside this folder!");
-            }
-
-            if (!confirm("Are you sure you want to delete this class?")) return;
-
-            yearObj.classes = yearObj.classes.filter(c => c.id !== classId);
-            localStorage.removeItem(classId);
-            localStorage.setItem('madrasha_years_structure', JSON.stringify(yearsData));
-
-            if (activeClassId === classId) {
-                activeClassId = yearObj.classes[0].id;
-            }
-            switchClass(year, activeClassId, false);
-        }
-
-        function updateCurrentClassTitle(newTitle) {
-            let yearObj = yearsData.find(y => y.year === activeYear);
-            if (yearObj) {
-                let cObj = yearObj.classes.find(c => c.id === activeClassId);
-                if (cObj) {
-                    cObj.title = newTitle || 'Untitled Class';
-                    localStorage.setItem('madrasha_years_structure', JSON.stringify(yearsData));
-                    renderYearNavbar();
-                }
-            }
-        }
-
-        function saveCurrentTabData() {
-            let data = {
-                inst: document.getElementById('inpInst').value,
-                exam: document.getElementById('inpExam').value,
-                cls: document.getElementById('inpClass').value,
-                subjects: subjects,
-                students: students
-            };
-            localStorage.setItem(activeClassId, JSON.stringify(data));
-        }
-
-        function loadCurrentTabData() {
-            let stored = JSON.parse(localStorage.getItem(activeClassId));
-            let yearObj = yearsData.find(y => y.year === activeYear);
-            let cObj = yearObj ? yearObj.classes.find(c => c.id === activeClassId) : null;
-
-            if (!stored) {
-                subjects = ["Bangla 1st", "Bangla 2nd", "English 1st", "English 2nd", "Math", "ICT"];
-                students = [
-                    { roll: 1, name: "Student 1", marks: [85, 80, 75, 70, 90, 95] }
-                ];
-                document.getElementById('inpInst').value = "Kewa Khadizatul Kubra (RA:) Mohila Fazil Madrasha";
-                document.getElementById('inpExam').value = `Half-Yearly Examination ${activeYear}`;
-                document.getElementById('inpClass').value = cObj ? cObj.title : "Class 1";
-            } else {
-                subjects = stored.subjects || [];
-                students = stored.students || [];
-                document.getElementById('inpInst').value = stored.inst || "";
-                document.getElementById('inpExam').value = stored.exam || "";
-                document.getElementById('inpClass').value = stored.cls || "";
-            }
-        }
-
-        function performGlobalSearch() {
-            let query = document.getElementById('globalSearchInput').value.trim().toLowerCase();
-            let popup = document.getElementById('searchResultsPopup');
-            popup.innerHTML = '';
-
-            if (query === '') {
-                popup.style.display = 'none';
-                return;
-            }
-
-            let matches = [];
-
-            yearsData.forEach(yObj => {
-                yObj.classes.forEach(cObj => {
-                    let tabData = JSON.parse(localStorage.getItem(cObj.id));
-                    if (tabData && tabData.students) {
-                        tabData.students.forEach((stu, index) => {
-                            if (stu.name.toLowerCase().includes(query)) {
-                                matches.push({
-                                    year: yObj.year,
-                                    classId: cObj.id,
-                                    className: tabData.cls || cObj.title,
-                                    studentName: stu.name,
-                                    roll: stu.roll,
-                                    studentIndex: index
-                                });
-                            }
-                        });
-                    }
-                });
-            });
-
-            if (matches.length === 0) {
-                popup.innerHTML = '<div class="search-item" style="color: #e74c3c; font-weight: bold;">No student found</div>';
-            } else {
-                matches.forEach(item => {
-                    let div = document.createElement('div');
-                    div.className = 'search-item';
-                    div.innerHTML = `
-                        <div class="search-item-info">
-                            <strong>${item.studentName}</strong> (Roll: ${item.roll})
-                        </div>
-                        <span class="search-item-class">${item.year} - ${item.className}</span>
-                    `;
-                    div.onclick = () => selectSearchResult(item.year, item.classId, item.studentIndex);
-                    popup.appendChild(div);
-                });
-            }
-
-            popup.style.display = 'block';
-        }
-
-        function selectSearchResult(year, classId, studentIndex) {
-            document.getElementById('searchResultsPopup').style.display = 'none';
-            document.getElementById('globalSearchInput').value = '';
-
-            switchClass(year, classId);
-
-            setTimeout(() => {
-                let dropdown = document.getElementById('studentSelect');
-                dropdown.value = studentIndex;
-                renderIndividualMarksheet();
-                document.getElementById('marksheetBox').scrollIntoView({ behavior: 'smooth' });
-            }, 100);
-        }
-
-        function syncPrintHeader() {
-            let inst = document.getElementById('inpInst').value;
-            let exam = document.getElementById('inpExam').value;
-            let cls = document.getElementById('inpClass').value;
-
-            document.getElementById('dispInst').innerText = inst || '';
-            document.getElementById('dispExam').innerText = exam || '';
-            document.getElementById('dispClass').innerText = cls || '';
-        }
-
-        function getGradeInfo(mark) {
-            if (mark < 33) return { point: 0.0, grade: 'F' };
-            if (mark >= 80) return { point: 5.0, grade: 'A+' };
-            if (mark >= 70) return { point: 4.0, grade: 'A' };
-            if (mark >= 60) return { point: 3.5, grade: 'A-' };
-            if (mark >= 50) return { point: 3.0, grade: 'B' };
-            if (mark >= 40) return { point: 2.0, grade: 'C' };
-            if (mark >= 33) return { point: 1.0, grade: 'D' };
-            return { point: 0.0, grade: 'F' };
-        }
-
-        function calculateResults() {
-            let totalSubjects = subjects.length;
-
-            students.forEach((s, idx) => {
-                s.originalIndex = idx;
-                let markArray = s.marks || [];
-                let total = 0;
-                let gpaSum = 0;
-                let failedCount = 0;
-
-                for (let i = 0; i < totalSubjects; i++) {
-                    let mark = parseInt(markArray[i]) || 0;
-                    total += mark;
-
-                    let info = getGradeInfo(mark);
-                    if (info.grade === 'F') {
-                        failedCount++;
-                    }
-                    gpaSum += info.point;
-                }
-
-                s.totalMarks = total;
-                s.failedCount = failedCount;
-                s.isPassed = (failedCount === 0);
-                s.gpa = (failedCount > 0 || totalSubjects === 0) ? "0.00" : (gpaSum / totalSubjects).toFixed(2);
-
-                if (s.gpa == "5.00") s.grade = "A+";
-                else if (s.gpa >= "4.00") s.grade = "A";
-                else if (s.gpa >= "3.50") s.grade = "A-";
-                else if (s.gpa >= "3.00") s.grade = "B";
-                else if (s.gpa >= "2.00") s.grade = "C";
-                else if (s.gpa >= "1.00") s.grade = "D";
-                else s.grade = "F";
-            });
-
-            let passed = students.filter(s => s.isPassed).sort((a, b) => b.totalMarks - a.totalMarks);
-            let failed = students.filter(s => !s.isPassed).sort((a, b) => {
-                if (a.failedCount !== b.failedCount) {
-                    return a.failedCount - b.failedCount;
-                }
-                return b.totalMarks - a.totalMarks;
-            });
-
-            let meritRank = 1;
-            passed.forEach(s => { s.position = meritRank++; });
-            failed.forEach(s => { s.position = meritRank++; });
-
-            saveCurrentTabData();
-            populateStudentDropdown();
-        }
-
-        function populateStudentDropdown() {
-            let dropdown = document.getElementById('studentSelect');
-            let selectedVal = dropdown.value;
-            dropdown.innerHTML = '<option value="">-- Select Student Marksheet --</option>';
-
-            students.forEach((s) => {
-                let opt = document.createElement('option');
-                opt.value = s.originalIndex;
-                opt.innerText = `Roll: ${s.roll} - ${s.name}`;
-                dropdown.appendChild(opt);
-            });
-
-            dropdown.value = selectedVal;
-        }
-
-        function renderIndividualMarksheet() {
-            let origIdx = document.getElementById('studentSelect').value;
-            let box = document.getElementById('marksheetBox');
-
-            if (origIdx === "") {
-                box.style.display = "none";
-                return;
-            }
-
-            let s = students.find(item => item.originalIndex == origIdx);
-            if (!s) return;
-
-            document.getElementById('msInst').innerText = document.getElementById('inpInst').value;
-            document.getElementById('msExam').innerText = document.getElementById('inpExam').value;
-            document.getElementById('msClass').innerText = document.getElementById('inpClass').value;
-
-            document.getElementById('msName').innerText = s.name;
-            document.getElementById('msRoll').innerText = s.roll;
-            document.getElementById('msTotalMarks').innerText = s.totalMarks;
-            document.getElementById('msGPA').innerText = s.gpa;
-            document.getElementById('msGrade').innerText = s.grade;
-            document.getElementById('msPosition').innerText = s.position;
-
-            let tbody = document.getElementById('msTableBody');
-            tbody.innerHTML = '';
-
-            subjects.forEach((sub, cIdx) => {
-                let mark = (s.marks && s.marks[cIdx] !== undefined) ? parseInt(s.marks[cIdx]) || 0 : 0;
-                let info = getGradeInfo(mark);
-
-                let tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${cIdx + 1}</td>
-                    <td style="text-align: left; padding-left: 20px; color: #2c3e50;">${sub}</td>
-                    <td style="color: #0f3057;">${mark}</td>
-                    <td>${info.point.toFixed(2)}</td>
-                    <td><span class="grade-pill ${info.grade === 'F' ? 'fail' : 'pass'}">${info.grade}</span></td>
-                `;
-                tbody.appendChild(tr);
-            });
-
-            box.style.display = "block";
-        }
-
-        function printIndividualMarksheet() {
-            let idx = document.getElementById('studentSelect').value;
-            if (idx === "") {
-                alert("Please select a student from the dropdown list first!");
-                return;
-            }
-
-            document.body.classList.add('print-marksheet-mode');
-            window.print();
-            document.body.classList.remove('print-marksheet-mode');
-        }
-
-        function getSortedAndFilteredStudents() {
-            let mode = document.getElementById('sortFilterSelect').value;
-            let list = [...students];
-
-            if (mode === 'marks_desc') {
-                return list.sort((a, b) => b.totalMarks - a.totalMarks);
-            } else if (mode === 'only_passed') {
-                return list.filter(s => s.isPassed).sort((a, b) => b.totalMarks - a.totalMarks);
-            } else if (mode === 'only_failed') {
-                return list.filter(s => !s.isPassed).sort((a, b) => {
-                    if (a.failedCount !== b.failedCount) {
-                        return a.failedCount - b.failedCount;
-                    }
-                    return b.totalMarks - a.totalMarks;
-                });
-            } else if (mode === 'final_merit') {
-                let passed = list.filter(s => s.isPassed).sort((a, b) => b.totalMarks - a.totalMarks);
-                let failed = list.filter(s => !s.isPassed).sort((a, b) => {
-                    if (a.failedCount !== b.failedCount) {
-                        return a.failedCount - b.failedCount;
-                    }
-                    return b.totalMarks - a.totalMarks;
-                });
-                return [...passed, ...failed];
-            }
-
-            return list;
-        }
-
-        function renderTable() {
-            calculateResults();
-            syncPrintHeader();
-
-            let headerRow = document.getElementById('headerRow');
-            let hHtml = `<th style="width: 60px;">Roll<div class="resizer"></div></th><th style="width: 190px;">Student Name<div class="resizer"></div></th>`;
-
-            subjects.forEach((sub, subIdx) => {
-                hHtml += `
-                    <th style="width: 95px;">
-                        <div class="header-subject-container">
-                            <input type="text" class="header-subject-input" value="${sub}" onchange="renameSubject(${subIdx}, this.value)">
-                            <button class="del-subj-btn no-print" onclick="deleteSubject(${subIdx})">✕</button>
-                        </div>
-                        <div class="resizer"></div>
-                    </th>
-                `;
-            });
-
-            hHtml += `
-                <th style="width: 75px;">Total<div class="resizer"></div></th>
-                <th style="width: 65px;">GPA<div class="resizer"></div></th>
-                <th style="width: 65px;">Grade<div class="resizer"></div></th>
-                <th style="width: 75px;">Position<div class="resizer"></div></th>
-                <th class="no-print" style="width: 45px;">Action</th>
-            `;
-            headerRow.innerHTML = hHtml;
-
-            let tbody = document.getElementById('gridBody');
-            tbody.innerHTML = '';
-
-            let displayStudents = getSortedAndFilteredStudents();
-
-            displayStudents.forEach((s, displayIdx) => {
-                let origIdx = s.originalIndex;
-                let tr = document.createElement('tr');
-                
-                let rowHtml = `
-                    <td><input type="text" class="cell-input" data-row="${displayIdx}" data-col="0" value="${s.roll}" oninput="updateRoll(${origIdx}, this.value, this)"></td>
-                    <td><input type="text" class="cell-input name-input" data-row="${displayIdx}" data-col="1" value="${s.name}" oninput="updateName(${origIdx}, this.value)"></td>
-                `;
-
-                subjects.forEach((_, cIdx) => {
-                    let val = (s.marks && s.marks[cIdx] !== undefined) ? s.marks[cIdx] : 0;
-                    rowHtml += `<td><input type="text" class="cell-input" data-row="${displayIdx}" data-col="${cIdx + 2}" value="${val}" oninput="updateMark(${origIdx}, ${cIdx}, this.value, this)"></td>`;
-                });
-
-                rowHtml += `
-                    <td class="calc-col">${s.totalMarks}</td>
-                    <td class="calc-col">${s.gpa}</td>
-                    <td class="calc-col ${s.grade === 'F' ? 'badge-fail' : 'badge-pass'}">${s.grade}</td>
-                    <td class="calc-col" style="color: #1B4D7E;">${s.position}</td>
-                    <td class="no-print"><button style="padding:2px 5px; background:#e74c3c; color:white; border-radius:2px; font-size:9px;" onclick="deleteStudent(${origIdx})">✕</button></td>
-                `;
-
-                tr.innerHTML = rowHtml;
-                tbody.appendChild(tr);
-            });
-
-            makeColumnsResizable();
-        }
-
-        function attachGlobalKeyboardNavigation() {
-            const table = document.getElementById('resizableTable');
-
-            table.addEventListener('focusin', function(e) {
-                if (e.target && e.target.classList.contains('cell-input')) {
-                    e.target.select();
-                }
-            });
-
-            table.addEventListener('keydown', function(e) {
-                const input = e.target;
-                if (!input || !input.classList.contains('cell-input')) return;
-
-                let r = parseInt(input.getAttribute('data-row'));
-                let c = parseInt(input.getAttribute('data-col'));
-
-                if (isNaN(r) || isNaN(c)) return;
-
-                let targetR = r;
-                let targetC = c;
-
-                if (e.key === 'ArrowRight') {
-                    targetC = c + 1;
-                } else if (e.key === 'ArrowLeft') {
-                    targetC = c - 1;
-                } else if (e.key === 'ArrowDown' || e.key === 'Enter') {
-                    targetR = r + 1;
-                } else if (e.key === 'ArrowUp') {
-                    targetR = r - 1;
-                } else if (e.key === 'PageDown') {
-                    targetR = r + 5;
-                } else if (e.key === 'PageUp') {
-                    targetR = r - 5;
-                } else {
-                    return;
-                }
-
-                e.preventDefault();
-
-                let targetInput = document.querySelector(`.cell-input[data-row="${targetR}"][data-col="${targetC}"]`);
-                
-                if (!targetInput && (e.key === 'PageDown' || e.key === 'PageUp')) {
-                    let allRows = document.querySelectorAll('#gridBody tr').length;
-                    if (e.key === 'PageDown') targetR = allRows - 1;
-                    if (e.key === 'PageUp') targetR = 0;
-                    targetInput = document.querySelector(`.cell-input[data-row="${targetR}"][data-col="${targetC}"]`);
-                }
-
-                if (targetInput) {
-                    targetInput.focus();
-                    targetInput.select();
-                }
-            });
-        }
-
-        function makeColumnsResizable() {
-            const table = document.getElementById('resizableTable');
-            const cols = table.querySelectorAll('th');
-
-            cols.forEach((col) => {
-                const resizer = col.querySelector('.resizer');
-                if (!resizer) return;
-
-                let x = 0;
-                let w = 0;
-
-                const mouseDownHandler = function (e) {
-                    x = e.clientX;
-                    const styles = window.getComputedStyle(col);
-                    w = parseInt(styles.width, 10);
-
-                    document.addEventListener('mousemove', mouseMoveHandler);
-                    document.addEventListener('mouseup', mouseUpHandler);
-                    resizer.classList.add('resizing');
-                };
-
-                const mouseMoveHandler = function (e) {
-                    const dx = e.clientX - x;
-                    col.style.width = `${Math.max(30, w + dx)}px`;
-                };
-
-                const mouseUpHandler = function () {
-                    document.removeEventListener('mousemove', mouseMoveHandler);
-                    document.removeEventListener('mouseup', mouseUpHandler);
-                    resizer.classList.remove('resizing');
-                };
-
-                resizer.addEventListener('mousedown', mouseDownHandler);
-            });
-        }
-
-        function updateRoll(origIdx, val, inputElem) { 
-            students[origIdx].roll = parseInt(val) || 0; 
-            calculateResults(); 
-        }
-
-        function updateName(origIdx, val) { 
-            students[origIdx].name = val; 
-            saveCurrentTabData(); 
-            populateStudentDropdown(); 
-        }
-
-        function updateMark(origIdx, cIdx, val, inputElem) { 
-            if (!students[origIdx].marks) students[origIdx].marks = [];
-            students[origIdx].marks[cIdx] = parseInt(val) || 0; 
-
-            calculateResults();
-
-            let row = inputElem.closest('tr');
-            if (row) {
-                let calcCols = row.querySelectorAll('.calc-col');
-                let s = students[origIdx];
-                if (calcCols.length >= 4 && s) {
-                    calcCols[0].innerText = s.totalMarks;
-                    calcCols[1].innerText = s.gpa;
-                    calcCols[2].innerText = s.grade;
-                    calcCols[2].className = `calc-col ${s.grade === 'F' ? 'badge-fail' : 'badge-pass'}`;
-                    calcCols[3].innerText = s.position;
-                }
-            }
-        }
-
-        function renameSubject(index, newName) { subjects[index] = newName || `Subject ${index + 1}`; saveCurrentTabData(); renderTable(); }
-        function addSubject() {
-            let subName = prompt("Enter new subject name:");
-            if (subName) {
-                subjects.push(subName);
-                students.forEach(s => { if (!s.marks) s.marks = []; s.marks.push(0); });
-                renderTable();
-            }
-        }
-        function deleteSubject(index) {
-            if (confirm(`Delete subject?`)) {
-                subjects.splice(index, 1);
-                students.forEach(s => { if (s.marks) s.marks.splice(index, 1); });
-                renderTable();
-            }
-        }
-
-        function addStudent() {
-            let nextRoll = students.length > 0 ? Math.max(...students.map(s => s.roll || 0)) + 1 : 1;
-            students.push({ roll: nextRoll, name: "New Student", marks: new Array(subjects.length).fill(0) });
-            renderTable();
-        }
-
-        function deleteStudent(origIdx) {
-            if (confirm("Delete student?")) { students.splice(origIdx, 1); renderTable(); }
-        }
-
-        function clearData() {
-            if (confirm("Reset current class data?")) {
-                localStorage.removeItem(activeClassId);
-                loadCurrentTabData();
-                renderTable();
-            }
-        }
-
-        initApp();
-
-        /* AUTOMATIC SERVICE WORKER & PWA REGISTRATION */
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js')
-                .then(reg => console.log("Service Worker Registered Successfully! Scope:", reg.scope))
-                .catch(err => console.log("SW Registration Failed:", err));
-            });
-        }
+        // Initialize App on Page Load
+        window.onload = initApp;
     </script>
 </body>
 </html>
