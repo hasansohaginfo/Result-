@@ -51,7 +51,7 @@
 
         @page { size: landscape; margin: 4mm; }
 
-        /* ORIGINAL HEADER DESIGN */
+        /* HEADER DESIGN */
         .title-header-container {
             display: flex; justify-content: space-between; align-items: center; background: #ffffff; padding: 12px 20px; border-radius: 6px; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-left: 5px solid #1B4D7E; flex-wrap: wrap; gap: 10px;
         }
@@ -157,11 +157,7 @@
             .grid-table th { background-color: #1B4D7E !important; color: white !important; font-size: 14px !important; padding: 6px 2px !important; border: 1.5px solid #000 !important; white-space: nowrap !important; }
             .grid-table td { padding: 4px 2px !important; font-size: 16px !important; font-weight: 700 !important; border: 1px solid #777 !important; white-space: nowrap !important; }
 
-            /* HIDE ACTION / DELETE COLUMN WHEN PRINTING */
-            th:last-child,
-            td:last-child {
-                display: none !important;
-            }
+            th:last-child, td:last-child { display: none !important; }
 
             .print-only-header { 
                 display: block !important; padding: 0 0 8px 0 !important; margin-bottom: 12px !important; border-bottom: 2px solid #1B4D7E; text-align: center; position: relative;
@@ -196,15 +192,12 @@
         
         .sort-select { background-color: #2c3e50; color: white; border: 1px solid #1a252f; font-weight: bold; }
 
-        /* EXCEL-STYLE RESIZABLE TABLE & DESIGN */
+        /* TABLE DESIGN */
         .table-responsive { width: 100%; overflow-x: auto; background: white; }
         .grid-table { width: 100%; border-collapse: collapse; text-align: center; table-layout: fixed; }
         .grid-table th { background-color: #1B4D7E; color: white; padding: 8px 4px; font-weight: 700; font-size: 15px; border: 1px solid #103356; white-space: nowrap; position: relative; user-select: none; }
 
-        /* COLUMN RESIZER BAR (EXCEL FEATURE) */
-        .resizer {
-            position: absolute; right: 0; top: 0; width: 5px; cursor: col-resize; user-select: none; height: 100%; background: transparent; z-index: 10;
-        }
+        .resizer { position: absolute; right: 0; top: 0; width: 5px; cursor: col-resize; user-select: none; height: 100%; background: transparent; z-index: 10; }
         .resizer:hover, .resizing { background: #f1c40f; width: 6px; }
 
         .header-subject-container { display: flex; align-items: center; justify-content: center; gap: 2px; width: 100%; overflow: hidden; }
@@ -218,6 +211,8 @@
         input.name-input { text-align: left; padding-left: 6px; font-weight: 700; color: #2c3e50; }
 
         .calc-col { background-color: #EDF2F7; font-weight: bold; color: #1A202C; font-size: 16px; }
+        
+        /* IMAGE MATCHING COLOR FOR LETTER GRADES */
         .badge-fail { color: #E74C3C; font-weight: bold; }
         .badge-pass { color: #27AE60; font-weight: bold; }
 
@@ -412,7 +407,7 @@
                 <div class="value" id="msGPA">0.00</div>
             </div>
             <div class="summary-card">
-                <div class="title">Result / Grade</div>
+                <div class="title">Grade</div>
                 <div class="value" id="msGrade">-</div>
             </div>
             <div class="summary-card">
@@ -607,7 +602,7 @@
             document.getElementById('dispExam').innerText = document.getElementById('inpExam').value;
             document.getElementById('dispClass').innerText = document.getElementById('inpClass').value;
 
-            subjects = cObj.subjects || ["Bangla", "English", "Math"];
+            subjects = cObj.subjects || [];
             students = cObj.students || [];
 
             renderTable();
@@ -615,57 +610,58 @@
         }
 
         function renderYearNavbar() {
-            const container = document.getElementById('yearNavbarList');
+            let container = document.getElementById('yearNavbarList');
             container.innerHTML = '';
 
-            yearsData.forEach(y => {
-                const dropDiv = document.createElement('div');
-                dropDiv.className = 'dropdown-main' + (y.year === activeYear ? ' active' : '');
+            yearsData.forEach(yObj => {
+                let dropdown = document.createElement('div');
+                dropdown.className = 'dropdown-main';
+                if (yObj.year === activeYear) dropdown.classList.add('active');
 
-                const btn = document.createElement('button');
+                let btn = document.createElement('button');
                 btn.className = 'dropbtn-year';
-                btn.innerHTML = `📅 Folder: ${y.year} ▾`;
+                btn.innerHTML = `📅 ${yObj.year} ▾`;
 
-                const content = document.createElement('div');
+                let content = document.createElement('div');
                 content.className = 'dropdown-content-menu';
 
-                y.classes.forEach(c => {
-                    const item = document.createElement('div');
-                    item.className = 'folder-item' + (y.year === activeYear && c.id === activeClassId ? ' active-folder' : '');
-                    item.innerHTML = `<span>📖 ${c.className || c.title}</span>`;
-                    item.onclick = () => switchClass(y.year, c.id);
+                yObj.classes.forEach(cObj => {
+                    let item = document.createElement('div');
+                    item.className = 'folder-item';
+                    if (yObj.year === activeYear && cObj.id === activeClassId) {
+                        item.classList.add('active-folder');
+                    }
+                    item.innerHTML = `<span>📂 ${cObj.className || cObj.title}</span>`;
+                    item.onclick = () => switchClass(yObj.year, cObj.id);
                     content.appendChild(item);
                 });
 
-                dropDiv.appendChild(btn);
-                dropDiv.appendChild(content);
-                container.appendChild(dropDiv);
+                dropdown.appendChild(btn);
+                dropdown.appendChild(content);
+                container.appendChild(dropdown);
             });
         }
 
         function addNewFolder() {
-            let newYear = prompt("Enter New Folder / Year Name (e.g. 2027 or Exam-2026):");
-            if (!newYear || newYear.trim() === '') return;
+            let yearName = prompt("Enter Year (e.g. 2027):");
+            if (!yearName) return;
 
-            newYear = newYear.trim();
-            if (yearsData.some(y => y.year === newYear)) {
-                alert("This folder name already exists!");
-                return;
+            let existingYear = yearsData.find(y => y.year === yearName);
+            if (!existingYear) {
+                let newYearObj = {
+                    year: yearName,
+                    classes: Array.from({ length: 12 }, (_, i) => ({
+                        id: `tab_${yearName}_class_${i + 1}`,
+                        title: `Class ${i + 1}`,
+                        subjects: ["Bangla", "English", "Math"],
+                        students: []
+                    }))
+                };
+                yearsData.push(newYearObj);
+                switchClass(yearName, `tab_${yearName}_class_1`);
+            } else {
+                alert("Year folder already exists!");
             }
-
-            const newFolderObj = {
-                year: newYear,
-                classes: Array.from({ length: 12 }, (_, i) => ({
-                    id: `tab_${newYear}_class_${i + 1}`,
-                    title: `Class ${i + 1}`,
-                    className: `Class ${i + 1}`,
-                    subjects: ["Bangla", "English", "Math"],
-                    students: []
-                }))
-            };
-
-            yearsData.push(newFolderObj);
-            switchClass(newYear, newFolderObj.classes[0].id);
         }
 
         function updateCurrentClassTitle(val) {
@@ -677,146 +673,110 @@
             }
         }
 
-        function addStudent() {
-            let nextRoll = students.length > 0 ? Math.max(...students.map(s => s.roll || 0)) + 1 : 1;
-            students.push({
-                roll: nextRoll,
-                name: `Student ${nextRoll}`,
-                marks: {}
-            });
-            renderTable();
-            populateStudentDropdown();
-            saveCurrentTabData();
-        }
-
-        function addSubject() {
-            let subName = prompt("Enter Subject Name:", `Subject ${subjects.length + 1}`);
-            if (subName && subName.trim() !== '') {
-                subjects.push(subName.trim());
-                renderTable();
-                saveCurrentTabData();
-            }
-        }
-
-        function deleteSubject(index) {
-            if (confirm(`Are you sure you want to delete subject '${subjects[index]}'?`)) {
-                subjects.splice(index, 1);
-                students.forEach(s => {
-                    delete s.marks[index];
-                });
-                renderTable();
-                saveCurrentTabData();
-            }
-        }
-
-        function deleteStudent(index) {
-            if (confirm("Are you sure you want to delete this student?")) {
-                students.splice(index, 1);
-                renderTable();
-                populateStudentDropdown();
-                saveCurrentTabData();
-            }
-        }
-
-        function clearData() {
-            if (confirm("⚠️ Are you sure you want to reset all data for this class?")) {
-                students = [];
-                subjects = ["Bangla", "English", "Math"];
-                renderTable();
-                populateStudentDropdown();
-                saveCurrentTabData();
-            }
-        }
-
-        function calculateGrading(score) {
-            score = Number(score) || 0;
-            if (score >= 80) return { point: 5.0, grade: 'A+' };
-            if (score >= 70) return { point: 4.0, grade: 'A' };
-            if (score >= 60) return { point: 3.5, grade: 'A-' };
-            if (score >= 50) return { point: 3.0, grade: 'B' };
-            if (score >= 40) return { point: 2.0, grade: 'C' };
-            if (score >= 33) return { point: 1.0, grade: 'D' };
+        /* MARKS & GRADE CALCULATION LOGIC */
+        function getGradeInfo(mark) {
+            let m = parseFloat(mark) || 0;
+            if (m >= 80) return { point: 5.0, grade: 'A+' };
+            if (m >= 70) return { point: 4.0, grade: 'A' };
+            if (m >= 60) return { point: 3.5, grade: 'A-' };
+            if (m >= 50) return { point: 3.0, grade: 'B' };
+            if (m >= 40) return { point: 2.0, grade: 'C' };
+            if (m >= 33) return { point: 1.0, grade: 'D' };
             return { point: 0.0, grade: 'F' };
         }
 
-        function calculateStudentStats(student) {
-            let total = 0;
-            let totalPoints = 0;
-            let failedCount = 0;
-
-            subjects.forEach((_, idx) => {
-                let mark = Number(student.marks[idx]) || 0;
-                total += mark;
-                let g = calculateGrading(mark);
-                totalPoints += g.point;
-                if (g.point === 0) failedCount++;
-            });
-
-            let gpa = (subjects.length > 0 && failedCount === 0) ? (totalPoints / subjects.length).toFixed(2) : "0.00";
-            let finalGrade = "F";
-            if (failedCount === 0 && subjects.length > 0) {
-                let numericGpa = parseFloat(gpa);
-                if (numericGpa >= 5.0) finalGrade = "A+";
-                else if (numericGpa >= 4.0) finalGrade = "A";
-                else if (numericGpa >= 3.5) finalGrade = "A-";
-                else if (numericGpa >= 3.0) finalGrade = "B";
-                else if (numericGpa >= 2.0) finalGrade = "C";
-                else if (numericGpa >= 1.0) finalGrade = "D";
-            }
-
-            return { total, gpa, failedCount, finalGrade };
+        function getGPAToGrade(gpa) {
+            if (gpa >= 5.0) return 'A+';
+            if (gpa >= 4.0) return 'A';
+            if (gpa >= 3.5) return 'A-';
+            if (gpa >= 3.0) return 'B';
+            if (gpa >= 2.0) return 'C';
+            if (gpa >= 1.0) return 'D';
+            return 'F';
         }
 
-        function getPositionsMap() {
-            let ranked = students.map((s, originalIdx) => {
-                let stats = calculateStudentStats(s);
-                return {
-                    originalIdx,
-                    total: stats.total,
-                    gpa: parseFloat(stats.gpa),
-                    failedCount: stats.failedCount
-                };
-            });
+        function calculateStudentStats(student) {
+            let totalMarks = 0;
+            let totalPoints = 0;
+            let failedCount = 0;
+            let totalSubjects = subjects.length;
 
-            ranked.sort((a, b) => {
-                if (a.failedCount !== b.failedCount) return a.failedCount - b.failedCount;
-                if (b.gpa !== a.gpa) return b.gpa - a.gpa;
-                return b.total - a.total;
-            });
-
-            let posMap = {};
-            let currentRank = 1;
-
-            ranked.forEach((item, index) => {
-                if (item.failedCount > 0) {
-                    posMap[item.originalIdx] = "F";
+            subjects.forEach((_, index) => {
+                let mark = parseFloat(student.marks[index]) || 0;
+                totalMarks += mark;
+                let info = getGradeInfo(mark);
+                if (info.grade === 'F') {
+                    failedCount++;
                 } else {
-                    if (index > 0) {
-                        let prev = ranked[index - 1];
-                        if (item.failedCount === prev.failedCount && item.gpa === prev.gpa && item.total === prev.total) {
-                            posMap[item.originalIdx] = posMap[prev.originalIdx];
-                        } else {
-                            currentRank = index + 1;
-                            posMap[item.originalIdx] = currentRank;
-                        }
-                    } else {
-                        posMap[item.originalIdx] = 1;
-                    }
+                    totalPoints += info.point;
                 }
             });
 
-            return posMap;
+            let finalGPA = 0;
+            let finalGrade = 'F';
+
+            if (failedCount === 0 && totalSubjects > 0) {
+                finalGPA = (totalPoints / totalSubjects).toFixed(2);
+                if (finalGPA > 5.0) finalGPA = "5.00";
+                finalGrade = getGPAToGrade(parseFloat(finalGPA));
+            } else {
+                finalGPA = "0.00";
+                finalGrade = "F";
+            }
+
+            return { totalMarks, finalGPA, finalGrade, failedCount };
         }
 
+        function calculatePositions() {
+            let studentStats = students.map((stu, index) => {
+                let stats = calculateStudentStats(stu);
+                return { index, stats };
+            });
+
+            studentStats.sort((a, b) => {
+                if (a.stats.failedCount !== b.stats.failedCount) {
+                    return a.stats.failedCount - b.stats.failedCount;
+                }
+                if (parseFloat(b.stats.finalGPA) !== parseFloat(a.stats.finalGPA)) {
+                    return parseFloat(b.stats.finalGPA) - parseFloat(a.stats.finalGPA);
+                }
+                return b.stats.totalMarks - a.stats.totalMarks;
+            });
+
+            let positions = {};
+            let rank = 1;
+            studentStats.forEach((item, i) => {
+                if (i > 0) {
+                    let prev = studentStats[i - 1];
+                    if (
+                        item.stats.failedCount === prev.stats.failedCount &&
+                        item.stats.finalGPA === prev.stats.finalGPA &&
+                        item.stats.totalMarks === prev.stats.totalMarks
+                    ) {
+                        positions[item.index] = positions[prev.index];
+                    } else {
+                        rank = i + 1;
+                        positions[item.index] = rank;
+                    }
+                } else {
+                    positions[item.index] = 1;
+                }
+            });
+
+            return positions;
+        }
+
+        /* RENDER TABLE WITH EXACT COLUMN MATCHING YOUR IMAGE */
         function renderTable() {
-            const headerRow = document.getElementById('headerRow');
-            const gridBody = document.getElementById('gridBody');
-            
+            let headerRow = document.getElementById('headerRow');
+            let gridBody = document.getElementById('gridBody');
+
             headerRow.innerHTML = '';
             gridBody.innerHTML = '';
 
-            let headers = ['Roll', 'Student Name', ...subjects, 'Total Marks', 'GPA', 'Result', 'Position', 'Action'];
-            
+            // 1. Updated Columns Header to Match Image: Total | GPA | Grade | Position
+            let headers = ['Roll', 'Student Name', ...subjects, 'Total', 'GPA', 'Grade', 'Position', 'Action'];
+
             headers.forEach((h, i) => {
                 let th = document.createElement('th');
                 if (i >= 2 && i < 2 + subjects.length) {
@@ -824,95 +784,174 @@
                     th.innerHTML = `
                         <div class="header-subject-container">
                             <input type="text" class="header-subject-input" value="${h}" onchange="updateSubjectName(${subIdx}, this.value)">
-                            <button class="del-subj-btn" onclick="deleteSubject(${subIdx})" title="Delete Subject">✕</button>
+                            <button class="del-subj-btn" onclick="deleteSubject(${subIdx})">✕</button>
                         </div>
                         <div class="resizer"></div>
                     `;
                 } else {
-                    th.innerHTML = `${h} <div class="resizer"></div>`;
+                    th.innerHTML = `${h}<div class="resizer"></div>`;
                 }
                 headerRow.appendChild(th);
             });
 
-            makeColumnsResizable();
+            let positions = calculatePositions();
 
-            let positionsMap = getPositionsMap();
-            let filterVal = document.getElementById('sortFilterSelect').value;
+            let filter = document.getElementById('sortFilterSelect').value;
+            let displayStudents = students.map((s, originalIndex) => ({ ...s, originalIndex }));
 
-            let displayStudents = students.map((s, idx) => ({ ...s, originalIndex: idx }));
-
-            if (filterVal === 'marks_desc') {
-                displayStudents.sort((a, b) => calculateStudentStats(b).total - calculateStudentStats(a).total);
-            } else if (filterVal === 'only_passed') {
+            if (filter === 'marks_desc') {
+                displayStudents.sort((a, b) => calculateStudentStats(b).totalMarks - calculateStudentStats(a).totalMarks);
+            } else if (filter === 'only_passed') {
                 displayStudents = displayStudents.filter(s => calculateStudentStats(s).failedCount === 0);
-            } else if (filterVal === 'only_failed') {
+            } else if (filter === 'only_failed') {
                 displayStudents = displayStudents.filter(s => calculateStudentStats(s).failedCount > 0);
-            } else if (filterVal === 'final_merit') {
+            } else if (filter === 'final_merit') {
                 displayStudents.sort((a, b) => {
-                    let statsA = calculateStudentStats(a);
-                    let statsB = calculateStudentStats(b);
-                    if (statsA.failedCount !== statsB.failedCount) return statsA.failedCount - statsB.failedCount;
-                    if (parseFloat(statsB.gpa) !== parseFloat(statsA.gpa)) return parseFloat(statsB.gpa) - parseFloat(statsA.gpa);
-                    return statsB.total - statsA.total;
+                    let statA = calculateStudentStats(a);
+                    let statB = calculateStudentStats(b);
+                    if (statA.failedCount !== statB.failedCount) return statA.failedCount - statB.failedCount;
+                    if (parseFloat(statB.finalGPA) !== parseFloat(statA.finalGPA)) return parseFloat(statB.finalGPA) - parseFloat(statA.finalGPA);
+                    return statB.totalMarks - statA.totalMarks;
                 });
             }
 
-            displayStudents.forEach((student) => {
-                let origIdx = student.originalIndex;
-                let stats = calculateStudentStats(student);
+            displayStudents.forEach((stu) => {
                 let tr = document.createElement('tr');
+                let stats = calculateStudentStats(stu);
+                let pos = positions[stu.originalIndex] || '-';
 
-                let tdRoll = `<td><input type="number" class="cell-input" value="${student.roll}" onchange="updateStudentRoll(${origIdx}, this.value)"></td>`;
-                let tdName = `<td><input type="text" class="cell-input name-input" value="${student.name}" onchange="updateStudentName(${origIdx}, this.value)"></td>`;
+                let tdRoll = `<td><input type="number" class="cell-input" value="${stu.roll}" onchange="updateStudentRoll(${stu.originalIndex}, this.value)"></td>`;
+                let tdName = `<td><input type="text" class="cell-input name-input" value="${stu.name}" onchange="updateStudentName(${stu.originalIndex}, this.value)"></td>`;
 
-                let subCells = subjects.map((_, sIdx) => {
-                    let val = student.marks[sIdx] !== undefined ? student.marks[sIdx] : '';
-                    return `<td><input type="number" class="cell-input" value="${val}" onchange="updateMark(${origIdx}, ${sIdx}, this.value)"></td>`;
-                }).join('');
+                let subCells = '';
+                subjects.forEach((_, subIdx) => {
+                    let val = stu.marks[subIdx] !== undefined ? stu.marks[subIdx] : '';
+                    subCells += `<td><input type="number" class="cell-input" value="${val}" oninput="updateStudentMark(${stu.originalIndex}, ${subIdx}, this.value)"></td>`;
+                });
 
-                let resultBadge = stats.failedCount > 0 
-                    ? `<span class="badge-fail">Fail (${stats.failedCount})</span>` 
-                    : `<span class="badge-pass">Pass (${stats.finalGrade})</span>`;
+                let tdTotal = `<td class="calc-col">${stats.totalMarks}</td>`;
+                let tdGPA = `<td class="calc-col">${stats.finalGPA}</td>`;
+                
+                // 2. Updated Grade display cell to match Image (Shows only Grade without 'Pass')
+                let gradeDisplay = stats.failedCount > 0 
+                    ? `<span class="badge-fail">F</span>` 
+                    : `<span class="badge-pass">${stats.finalGrade}</span>`;
+                let tdGrade = `<td class="calc-col">${gradeDisplay}</td>`;
+                
+                let tdPos = `<td class="calc-col">${pos}</td>`;
+                let tdAction = `<td class="no-print"><button style="background:#e74c3c; color:white; border:none; border-radius:4px; padding:3px 8px; cursor:pointer;" onclick="deleteStudent(${stu.originalIndex})">🗑️</button></td>`;
 
-                let posDisplay = positionsMap[origIdx] !== undefined ? positionsMap[origIdx] : '-';
-
-                let tdTotal = `<td class="calc-col">${stats.total}</td>`;
-                let tdGPA = `<td class="calc-col">${stats.gpa}</td>`;
-                let tdResult = `<td class="calc-col">${resultBadge}</td>`;
-                let tdPos = `<td class="calc-col" style="color:#1B4D7E; font-weight:800;">${posDisplay}</td>`;
-                let tdAction = `<td><button onclick="deleteStudent(${origIdx})" style="background:#E74C3C; color:white; border:none; border-radius:3px; padding:3px 8px;">Delete</button></td>`;
-
-                tr.innerHTML = tdRoll + tdName + subCells + tdTotal + tdGPA + tdResult + tdPos + tdAction;
+                tr.innerHTML = tdRoll + tdName + subCells + tdTotal + tdGPA + tdGrade + tdPos + tdAction;
                 gridBody.appendChild(tr);
+            });
+
+            enableColumnResizing();
+        }
+
+        function enableColumnResizing() {
+            const table = document.getElementById('resizableTable');
+            const cols = table.querySelectorAll('th');
+            cols.forEach(col => {
+                const resizer = col.querySelector('.resizer');
+                if (!resizer) return;
+                let x = 0, w = 0;
+                const mouseDownHandler = function(e) {
+                    x = e.clientX;
+                    const styles = window.getComputedStyle(col);
+                    w = parseInt(styles.width, 10);
+                    document.addEventListener('mousemove', mouseMoveHandler);
+                    document.addEventListener('mouseup', mouseUpHandler);
+                    resizer.classList.add('resizing');
+                };
+                const mouseMoveHandler = function(e) {
+                    const dx = e.clientX - x;
+                    col.style.width = `${w + dx}px`;
+                };
+                const mouseUpHandler = function() {
+                    document.removeEventListener('mousemove', mouseMoveHandler);
+                    document.removeEventListener('mouseup', mouseUpHandler);
+                    resizer.classList.remove('resizing');
+                };
+                resizer.addEventListener('mousedown', mouseDownHandler);
             });
         }
 
-        function updateSubjectName(index, name) {
-            subjects[index] = name.trim();
-            saveCurrentTabData();
-        }
-
-        function updateStudentRoll(index, val) {
-            students[index].roll = Number(val) || 0;
-            saveCurrentTabData();
-        }
-
-        function updateStudentName(index, val) {
-            students[index].name = val.trim();
-            populateStudentDropdown();
-            saveCurrentTabData();
-        }
-
-        function updateMark(studentIndex, subjectIndex, val) {
-            if (val === '') {
-                delete students[studentIndex].marks[subjectIndex];
-            } else {
-                students[studentIndex].marks[subjectIndex] = Number(val);
-            }
+        /* DATA MANAGEMENT ACTIONS */
+        function addStudent() {
+            students.push({
+                roll: students.length + 1,
+                name: `Student ${students.length + 1}`,
+                marks: {}
+            });
             renderTable();
-            saveCurrentTabData();
+            populateStudentDropdown();
+            saveSchoolDataToFirebase();
         }
 
+        function addSubject() {
+            let subName = prompt("Enter Subject Name:");
+            if (subName && subName.trim() !== "") {
+                subjects.push(subName.trim());
+                renderTable();
+                saveSchoolDataToFirebase();
+            }
+        }
+
+        function updateSubjectName(idx, val) {
+            subjects[idx] = val;
+            saveSchoolDataToFirebase();
+        }
+
+        function deleteSubject(idx) {
+            if (confirm("Are you sure you want to delete this subject?")) {
+                subjects.splice(idx, 1);
+                students.forEach(s => {
+                    delete s.marks[idx];
+                });
+                renderTable();
+                saveSchoolDataToFirebase();
+            }
+        }
+
+        function updateStudentRoll(idx, val) {
+            students[idx].roll = parseInt(val) || 0;
+            renderTable();
+            populateStudentDropdown();
+            saveSchoolDataToFirebase();
+        }
+
+        function updateStudentName(idx, val) {
+            students[idx].name = val;
+            populateStudentDropdown();
+            saveSchoolDataToFirebase();
+        }
+
+        function updateStudentMark(stuIdx, subIdx, val) {
+            students[stuIdx].marks[subIdx] = val !== "" ? parseFloat(val) : "";
+            renderTable();
+            saveSchoolDataToFirebase();
+        }
+
+        function deleteStudent(idx) {
+            if (confirm("Delete this student record?")) {
+                students.splice(idx, 1);
+                renderTable();
+                populateStudentDropdown();
+                saveSchoolDataToFirebase();
+            }
+        }
+
+        function clearData() {
+            if (confirm("⚠️ Are you sure you want to RESET all data in this class tab?")) {
+                subjects = [];
+                students = [];
+                renderTable();
+                populateStudentDropdown();
+                saveSchoolDataToFirebase();
+            }
+        }
+
+        /* MARKSHEET GENERATION & PRINTING */
         function populateStudentDropdown() {
             let select = document.getElementById('studentSelect');
             select.innerHTML = '<option value="">-- Select Student Marksheet --</option>';
@@ -920,13 +959,14 @@
             students.forEach((s, idx) => {
                 let opt = document.createElement('option');
                 opt.value = idx;
-                opt.innerText = `Roll: ${s.roll} - ${s.name}`;
+                opt.innerText = `Roll ${s.roll} - ${s.name}`;
                 select.appendChild(opt);
             });
         }
 
         function renderIndividualMarksheet() {
-            let idx = document.getElementById('studentSelect').value;
+            let select = document.getElementById('studentSelect');
+            let idx = select.value;
             let box = document.getElementById('marksheetBox');
 
             if (idx === "") {
@@ -934,39 +974,39 @@
                 return;
             }
 
-            let s = students[idx];
-            let stats = calculateStudentStats(s);
-            let posMap = getPositionsMap();
+            let student = students[idx];
+            let stats = calculateStudentStats(student);
+            let positions = calculatePositions();
 
             document.getElementById('msInst').innerText = document.getElementById('inpInst').value;
             document.getElementById('msExam').innerText = document.getElementById('inpExam').value;
             document.getElementById('msClass').innerText = document.getElementById('inpClass').value;
 
-            document.getElementById('msName').innerText = s.name;
-            document.getElementById('msRoll').innerText = s.roll;
+            document.getElementById('msName').innerText = student.name;
+            document.getElementById('msRoll').innerText = student.roll;
 
             let tbody = document.getElementById('msTableBody');
             tbody.innerHTML = '';
 
-            subjects.forEach((subName, sIdx) => {
-                let mark = Number(s.marks[sIdx]) || 0;
-                let g = calculateGrading(mark);
+            subjects.forEach((sub, subIdx) => {
+                let mark = student.marks[subIdx] !== undefined ? student.marks[subIdx] : '-';
+                let gradeInfo = getGradeInfo(mark);
 
                 let tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td>${sIdx + 1}</td>
-                    <td style="text-align: left; padding-left: 20px;">${subName}</td>
+                    <td>${subIdx + 1}</td>
+                    <td style="text-align: left; padding-left: 20px;">${sub}</td>
                     <td>${mark}</td>
-                    <td>${g.point.toFixed(2)}</td>
-                    <td style="font-weight: bold; color: ${g.point === 0 ? '#E74C3C' : '#1B4D7E'}">${g.grade}</td>
+                    <td>${gradeInfo.point.toFixed(2)}</td>
+                    <td>${gradeInfo.grade}</td>
                 `;
                 tbody.appendChild(tr);
             });
 
-            document.getElementById('msTotalMarks').innerText = stats.total;
-            document.getElementById('msGPA').innerText = stats.gpa;
-            document.getElementById('msGrade').innerText = stats.failedCount > 0 ? `Fail (${stats.failedCount})` : stats.finalGrade;
-            document.getElementById('msPosition').innerText = posMap[idx] !== undefined ? posMap[idx] : '-';
+            document.getElementById('msTotalMarks').innerText = stats.totalMarks;
+            document.getElementById('msGPA').innerText = stats.finalGPA;
+            document.getElementById('msGrade').innerText = stats.finalGrade;
+            document.getElementById('msPosition').innerText = positions[idx] || '-';
 
             box.style.display = 'block';
         }
@@ -979,98 +1019,60 @@
             }
             document.body.classList.add('print-marksheet-mode');
             window.print();
-            setTimeout(() => {
-                document.body.classList.remove('print-marksheet-mode');
-            }, 1000);
+            document.body.classList.remove('print-marksheet-mode');
         }
 
+        /* GLOBAL SEARCH FUNCTION */
         function performGlobalSearch() {
-            let query = document.getElementById('globalSearchInput').value.trim().toLowerCase();
+            let query = document.getElementById('globalSearchInput').value.toLowerCase().trim();
             let popup = document.getElementById('searchResultsPopup');
 
-            if (query === '') {
+            if (!query) {
                 popup.style.display = 'none';
                 return;
             }
 
+            popup.innerHTML = '';
             let results = [];
 
-            yearsData.forEach(y => {
-                y.classes.forEach(c => {
-                    if (c.students) {
-                        c.students.forEach(s => {
-                            if (s.name && s.name.toLowerCase().includes(query)) {
-                                results.push({
-                                    year: y.year,
-                                    classId: c.id,
-                                    className: c.className || c.title,
-                                    student: s
-                                });
-                            }
-                        });
-                    }
+            yearsData.forEach(yObj => {
+                yObj.classes.forEach(cObj => {
+                    (cObj.students || []).forEach(s => {
+                        if (s.name && s.name.toLowerCase().includes(query)) {
+                            results.push({
+                                year: yObj.year,
+                                classId: cObj.id,
+                                className: cObj.className || cObj.title,
+                                studentName: s.name,
+                                roll: s.roll
+                            });
+                        }
+                    });
                 });
             });
 
-            if (results.length === 0) {
-                popup.innerHTML = '<div style="padding:10px; font-size:12px; color:#888;">No students found!</div>';
-            } else {
-                popup.innerHTML = '';
-                results.forEach(res => {
+            if (results.length > 0) {
+                results.forEach(r => {
                     let div = document.createElement('div');
                     div.className = 'search-item';
                     div.innerHTML = `
                         <div class="search-item-info">
-                            <strong>${res.student.name}</strong> (Roll: ${res.student.roll})
+                            <strong>${r.studentName}</strong> (Roll: ${r.roll})
                         </div>
-                        <span class="search-item-class">${res.year} - ${res.className}</span>
+                        <span class="search-item-class">${r.year} - ${r.className}</span>
                     `;
                     div.onclick = () => {
+                        switchClass(r.year, r.classId);
                         popup.style.display = 'none';
                         document.getElementById('globalSearchInput').value = '';
-                        switchClass(res.year, res.classId);
                     };
                     popup.appendChild(div);
                 });
+                popup.style.display = 'block';
+            } else {
+                popup.innerHTML = '<div style="padding:10px; font-size:12px; color:#666;">No student found</div>';
+                popup.style.display = 'block';
             }
-
-            popup.style.display = 'block';
-        }
-
-        function makeColumnsResizable() {
-            const table = document.getElementById('resizableTable');
-            const cols = table.querySelectorAll('th');
-
-            cols.forEach((col) => {
-                const resizer = col.querySelector('.resizer');
-                if (!resizer) return;
-
-                let x = 0;
-                let w = 0;
-
-                const mouseDownHandler = function (e) {
-                    x = e.clientX;
-                    const styles = window.getComputedStyle(col);
-                    w = parseInt(styles.width, 10);
-
-                    document.addEventListener('mousemove', mouseMoveHandler);
-                    document.addEventListener('mouseup', mouseUpHandler);
-                    resizer.classList.add('resizing');
-                };
-
-                const mouseMoveHandler = function (e) {
-                    const dx = e.clientX - x;
-                    col.style.width = `${w + dx}px`;
-                };
-
-                const mouseUpHandler = function () {
-                    document.removeEventListener('mousemove', mouseMoveHandler);
-                    document.removeEventListener('mouseup', mouseUpHandler);
-                    resizer.classList.remove('resizing');
-                };
-
-                resizer.addEventListener('mousedown', mouseDownHandler);
-            });
         }
     </script>
 </body>
