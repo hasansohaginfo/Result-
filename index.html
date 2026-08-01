@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Academic Result Software - Multi-Folder SOHAG KOBIR</title>
+    <title>Academic Result Software - SOHAG KOBIR</title>
     
     <!-- PWA Manifest Integration -->
     <link rel="manifest" href="./manifest.json">
@@ -51,7 +51,7 @@
 
         @page { size: landscape; margin: 4mm; }
 
-        /* HEADER & SEARCH CONTAINER */
+        /* ORIGINAL HEADER DESIGN */
         .title-header-container {
             display: flex; justify-content: space-between; align-items: center; background: #ffffff; padding: 12px 20px; border-radius: 6px; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-left: 5px solid #1B4D7E; flex-wrap: wrap; gap: 10px;
         }
@@ -73,7 +73,7 @@
         .search-item-info strong { color: #1B4D7E; }
         .search-item-class { font-size: 11px; background: #e2e8f0; padding: 2px 6px; border-radius: 4px; font-weight: bold; }
 
-        /* NAVBAR & MULTI-FOLDER DROPDOWN */
+        /* ORIGINAL NAVBAR & MULTI-FOLDER MENU */
         .navbar-container { background: #1B4D7E; padding: 0 10px; border-radius: 6px 6px 0 0; display: flex; align-items: center; border-bottom: 3px solid #0f3057; margin-bottom: 15px; gap: 5px; position: relative; z-index: 100; }
         .year-navbar-list { display: flex; align-items: center; gap: 5px; }
         .dropdown-main { position: relative; display: inline-block; }
@@ -156,7 +156,6 @@
             .grid-table { box-shadow: none !important; width: 100% !important; border-collapse: collapse !important; table-layout: auto !important; }
             .grid-table th { background-color: #1B4D7E !important; color: white !important; font-size: 14px !important; padding: 6px 2px !important; border: 1.5px solid #000 !important; white-space: nowrap !important; }
             .grid-table td { padding: 4px 2px !important; font-size: 16px !important; font-weight: 700 !important; border: 1px solid #777 !important; white-space: nowrap !important; }
-            .resizer { display: none !important; }
 
             .print-only-header { 
                 display: block !important; padding: 0 0 8px 0 !important; margin-bottom: 12px !important; border-bottom: 2px solid #1B4D7E; text-align: center; position: relative;
@@ -191,27 +190,26 @@
         
         .sort-select { background-color: #2c3e50; color: white; border: 1px solid #1a252f; font-weight: bold; }
 
+        /* ORIGINAL TABLE DESIGN & SIZES */
         .table-responsive { width: 100%; overflow-x: auto; background: white; }
         .grid-table { width: 100%; border-collapse: collapse; text-align: center; table-layout: fixed; }
-        .grid-table th { background-color: #1B4D7E; color: white; padding: 8px 4px; font-weight: 700; font-size: 16px; border: 1px solid #103356; white-space: nowrap; position: relative; user-select: none; }
-        .resizer { position: absolute; right: 0; top: 0; width: 5px; cursor: col-resize; user-select: none; height: 100%; z-index: 10; }
-        .resizer:hover, .resizing { background-color: #3182CE; }
+        .grid-table th { background-color: #1B4D7E; color: white; padding: 8px 4px; font-weight: 700; font-size: 15px; border: 1px solid #103356; white-space: nowrap; position: relative; user-select: none; }
 
         .header-subject-container { display: flex; align-items: center; justify-content: center; gap: 2px; width: 100%; overflow: hidden; }
-        input.header-subject-input { background: transparent; border: none; color: white; font-weight: 700; text-align: center; font-size: 16px; width: 100%; outline: none; }
+        input.header-subject-input { background: transparent; border: none; color: white; font-weight: 700; text-align: center; font-size: 15px; width: 100%; outline: none; }
         .del-subj-btn { background: rgba(255,255,255,0.2); color: white; border: none; border-radius: 50%; width: 16px; height: 16px; font-size: 9px; cursor: pointer; padding: 0; flex-shrink: 0; }
 
-        .grid-table td { border: 1px solid #E2E8F0; padding: 5px; overflow: hidden; font-size: 18px; }
+        .grid-table td { border: 1px solid #E2E8F0; padding: 5px; overflow: hidden; font-size: 16px; }
         .grid-table tr:nth-child(even) { background-color: #F8FAFC; }
-        input.cell-input { width: 100%; padding: 4px 2px; border: 1px solid transparent; text-align: center; font-size: 18px; font-weight: 700; outline: none; background: transparent; }
+        input.cell-input { width: 100%; padding: 4px 2px; border: 1px solid transparent; text-align: center; font-size: 16px; font-weight: 700; outline: none; background: transparent; }
         input.cell-input:focus { background: #EBF8FF; border: 1px solid #3182CE; }
         input.name-input { text-align: left; padding-left: 6px; font-weight: 700; color: #2c3e50; }
 
-        .calc-col { background-color: #EDF2F7; font-weight: bold; color: #1A202C; font-size: 18px; }
+        .calc-col { background-color: #EDF2F7; font-weight: bold; color: #1A202C; font-size: 16px; }
         .badge-fail { color: #E74C3C; font-weight: bold; }
         .badge-pass { color: #27AE60; font-weight: bold; }
 
-        /* MARKSHEET STYLES */
+        /* MARKSHEET ORIGINAL CLASSIC STYLES */
         .marksheet-container { 
             background: #ffffff; 
             padding: 25px 30px; 
@@ -705,7 +703,7 @@
             let displayStudents = [...students];
             let filterType = document.getElementById('sortFilterSelect').value;
 
-            displayStudents.forEach((stu, sIndex) => {
+            displayStudents.forEach((stu) => {
                 let totalMarks = 0;
                 let totalGP = 0;
                 let isFail = false;
