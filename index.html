@@ -933,24 +933,24 @@
             });
         }
 
-        /* DATA MANAGEMENT ACTIONS */
+        /* DATA MANAGEMENT ACTIONS (FIXED REALTIME UPDATE LOGIC) */
         function addStudent() {
             students.push({
                 roll: students.length + 1,
                 name: `Student ${students.length + 1}`,
                 marks: {}
             });
+            saveSchoolDataToFirebase();
             renderTable();
             populateStudentDropdown();
-            saveSchoolDataToFirebase();
         }
 
         function addSubject() {
             let subName = prompt("Enter Subject Name:");
             if (subName && subName.trim() !== "") {
                 subjects.push(subName.trim());
-                renderTable();
                 saveSchoolDataToFirebase();
+                renderTable();
             }
         }
 
@@ -965,36 +965,36 @@
                 students.forEach(s => {
                     delete s.marks[idx];
                 });
-                renderTable();
                 saveSchoolDataToFirebase();
+                renderTable();
             }
         }
 
         function updateStudentRoll(idx, val) {
             students[idx].roll = parseInt(val) || 0;
+            saveSchoolDataToFirebase();
             renderTable();
             populateStudentDropdown();
-            saveSchoolDataToFirebase();
         }
 
         function updateStudentName(idx, val) {
             students[idx].name = val;
-            populateStudentDropdown();
             saveSchoolDataToFirebase();
+            populateStudentDropdown();
         }
 
         function updateStudentMark(stuIdx, subIdx, val) {
             students[stuIdx].marks[subIdx] = val !== "" ? parseFloat(val) : "";
-            renderTable();
             saveSchoolDataToFirebase();
+            renderTable();
         }
 
         function deleteStudent(idx) {
             if (confirm("Delete this student record?")) {
                 students.splice(idx, 1);
+                saveSchoolDataToFirebase();
                 renderTable();
                 populateStudentDropdown();
-                saveSchoolDataToFirebase();
             }
         }
 
@@ -1002,9 +1002,9 @@
             if (confirm("⚠️ Are you sure you want to RESET all data in this class tab?")) {
                 subjects = [];
                 students = [];
+                saveSchoolDataToFirebase();
                 renderTable();
                 populateStudentDropdown();
-                saveSchoolDataToFirebase();
             }
         }
 
