@@ -1,58 +1,1187 @@
 <!DOCTYPE html>
-<html lang="bn">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Academic Result Software</title>
+    <title>Academic Result Software - Multi-Folder SOHAG KOBIR</title>
+    
+    <!-- PWA Manifest Integration -->
     <link rel="manifest" href="./manifest.json">
     <meta name="theme-color" content="#1B4D7E">
+
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f6f9;
-            margin: 0;
-            padding: 20px;
+        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { margin: 0; padding: 15px; background-color: #f4f6f9; color: #222; font-size: 15px; position: relative; }
+
+        /* PASSWORD LOCK SCREEN OVERLAY */
+        #lockScreenOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #0f3057;
+            z-index: 99999;
             display: flex;
             justify-content: center;
             align-items: center;
-            min-height: 100vh;
+            flex-direction: column;
         }
-        .container {
+
+        .lock-box {
             background: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            max-width: 500px;
-            width: 100%;
+            padding: 30px 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
             text-align: center;
+            max-width: 380px;
+            width: 90%;
         }
-        h2 {
-            color: #1B4D7E;
-            margin-bottom: 20px;
+
+        .lock-box h2 { margin-top: 0; color: #1B4D7E; font-size: 20px; text-transform: uppercase; }
+        .lock-box input { width: 100%; padding: 10px; margin: 15px 0; border: 2px solid #cbd5e1; border-radius: 6px; font-size: 16px; text-align: center; outline: none; }
+        .lock-box input:focus { border-color: #1B4D7E; }
+        .lock-box button { width: 100%; background: #1B4D7E; color: white; padding: 10px; border: none; border-radius: 6px; font-size: 15px; font-weight: bold; cursor: pointer; }
+        .lock-box button:hover { background: #0f3057; }
+        .lock-error { color: #e74c3c; font-weight: bold; font-size: 13px; margin-top: 10px; display: none; }
+
+        @page { size: landscape; margin: 4mm; }
+
+        /* HEADER & SEARCH CONTAINER */
+        .title-header-container {
+            display: flex; justify-content: space-between; align-items: center; background: #ffffff; padding: 12px 20px; border-radius: 6px; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-left: 5px solid #1B4D7E; flex-wrap: wrap; gap: 10px;
         }
-        p {
-            color: #555;
-            font-size: 16px;
+
+        .permanent-software-title { font-size: 18px; font-weight: 800; letter-spacing: 0.5px; color: #1B4D7E; text-transform: uppercase; margin: 0; }
+        .permanent-software-title span { display: block; font-size: 13px; color: #7f8c8d; font-weight: 600; margin-top: 3px; letter-spacing: 1px; }
+
+        .global-search-box { display: flex; align-items: center; gap: 5px; position: relative; }
+        .global-search-box input { padding: 8px 12px; border: 2px solid #1B4D7E; border-radius: 20px; font-size: 13px; outline: none; width: 220px; transition: width 0.3s ease; }
+        .global-search-box input:focus { width: 280px; background-color: #f8fafc; }
+        .global-search-box button { background-color: #1B4D7E; color: white; border: none; padding: 8px 15px; border-radius: 20px; cursor: pointer; font-weight: bold; font-size: 12px; }
+        .global-search-box button:hover { background-color: #0f3057; }
+
+        .search-results-popup { position: absolute; top: 45px; right: 0; background: white; border: 1px solid #cbd5e1; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.15); width: 340px; max-height: 250px; overflow-y: auto; z-index: 2000; display: none; }
+        .search-item { padding: 10px 15px; border-bottom: 1px solid #f1f5f9; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+        .search-item:hover { background-color: #e2e8f0; }
+        .search-item-info strong { color: #1B4D7E; }
+        .search-item-class { font-size: 11px; background: #e2e8f0; padding: 2px 6px; border-radius: 4px; font-weight: bold; }
+
+        /* NAVBAR & MULTI-FOLDER DROPDOWN */
+        .navbar-container { background: #1B4D7E; padding: 0 10px; border-radius: 6px 6px 0 0; display: flex; align-items: center; border-bottom: 3px solid #0f3057; margin-bottom: 15px; gap: 5px; position: relative; z-index: 100; }
+        .year-navbar-list { display: flex; align-items: center; gap: 5px; }
+        .dropdown-main { position: relative; display: inline-block; }
+        .dropbtn-year { background-color: #1B4D7E; color: white; padding: 12px 18px; font-size: 15px; font-weight: bold; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: background 0.2s; border-bottom: 3px solid transparent; }
+        .dropdown-main:hover .dropbtn-year, .dropdown-main.active .dropbtn-year { background-color: #0f3057; border-bottom: 3px solid #f1c40f; }
+        .dropdown-content-menu { display: none; position: absolute; top: 100%; left: 0; background-color: #ffffff; min-width: 230px; max-height: 400px; overflow-y: auto; box-shadow: 0px 8px 16px rgba(0,0,0,0.2); z-index: 9999; border-radius: 0 0 6px 6px; border: 1px solid #cbd5e1; }
+        .dropdown-content-menu div.folder-item { color: #1e293b; padding: 10px 15px; display: flex; align-items: center; justify-content: space-between; font-size: 13px; font-weight: 600; border-bottom: 1px solid #f1f5f9; cursor: pointer; transition: background 0.2s; }
+        .dropdown-content-menu div.folder-item:hover { background-color: #e2e8f0; color: #1B4D7E; }
+        .dropdown-content-menu div.folder-item.active-folder { background-color: #e0e7ff; color: #1B4D7E; font-weight: bold; }
+        .dropdown-main:hover .dropdown-content-menu { display: block !important; }
+        .btn-add-year-folder { background-color: #27AE60; color: white; border: none; padding: 8px 14px; font-size: 13px; font-weight: bold; border-radius: 4px; cursor: pointer; display: flex; align-items: center; gap: 5px; margin-left: 10px; white-space: nowrap; }
+        .btn-add-year-folder:hover { background-color: #219653; }
+        .btn-add-folder-green { background-color: #27AE60 !important; color: white !important; font-weight: bold !important; text-align: center; justify-content: center !important; padding: 10px 15px; cursor: pointer; }
+        .btn-add-folder-green:hover { background-color: #219653 !important; }
+
+        /* PRINT SETTINGS & WATERMARK */
+        body.print-marksheet-mode { background-color: white !important; padding: 0 !important; }
+        body.print-marksheet-mode .main-table-view,
+        body.print-marksheet-mode .no-print,
+        body.print-marksheet-mode .navbar-container,
+        body.print-marksheet-mode .print-only-header,
+        body.print-marksheet-mode .title-header-container { display: none !important; }
+        
+        body.print-marksheet-mode .marksheet-container { 
+            display: block !important; 
+            box-shadow: none !important; 
+            border: 2px solid #1B4D7E !important; 
+            margin: 0 auto !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            position: relative !important;
+            padding-top: 30px !important;
         }
+
+        @page print-portrait { size: portrait; margin: 8mm 5mm 5mm 5mm; }
+        @page print-landscape { size: landscape; margin: 4mm; }
+
+        body.print-marksheet-mode { page: print-portrait; }
+
+        .print-only-header { display: none; }
+
+        /* TOP CENTER WATERMARK STYLING */
+        .print-watermark-top {
+            display: none;
+            text-align: center;
+            font-size: 11px;
+            font-weight: 700;
+            color: #555555;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+        }
+
+        /* Combined Sheet Watermark */
+        body > .print-watermark-top {
+            position: absolute;
+            top: 2px;
+            left: 0;
+            width: 100%;
+            z-index: 9999;
+        }
+
+        /* Marksheet Internal Watermark */
+        .marksheet-container .print-watermark-top {
+            position: absolute;
+            top: 6px;
+            left: 0;
+            width: 100%;
+            z-index: 10;
+        }
+
+        @media print {
+            @page { size: landscape; margin: 4mm; }
+
+            /* Combined print view: show body watermark */
+            body:not(.print-marksheet-mode) > .print-watermark-top {
+                display: block !important;
+            }
+
+            body:not(.print-marksheet-mode) { 
+                background-color: white !important;
+                padding: 15px 0 0 0 !important;
+                margin: 0 !important;
+                zoom: 70% !important;
+                -webkit-print-color-adjust: exact !important; 
+                print-color-adjust: exact !important; 
+            }
+
+            /* Marksheet print view: hide body watermark, show marksheet watermark */
+            body.print-marksheet-mode > .print-watermark-top {
+                display: none !important;
+            }
+
+            body.print-marksheet-mode {
+                padding: 0 !important;
+                margin: 0 !important;
+                overflow: hidden !important;
+            }
+
+            body.print-marksheet-mode .marksheet-container {
+                page-break-inside: avoid !important;
+                page-break-after: avoid !important;
+                page-break-before: avoid !important;
+                zoom: 86% !important; 
+                padding: 30px 20px 20px 20px !important;
+                box-sizing: border-box !important;
+            }
+
+            body.print-marksheet-mode .marksheet-container .print-watermark-top {
+                display: block !important;
+                top: 8px !important;
+                font-size: 10px !important;
+                color: #555555 !important;
+            }
+
+            body:not(.print-marksheet-mode) .marksheet-container { display: none !important; }
+            .no-print, .navbar-container, .title-header-container, #lockScreenOverlay { display: none !important; }
+            .table-responsive { overflow: visible !important; width: 100% !important; }
+            .grid-table { box-shadow: none !important; width: 100% !important; border-collapse: collapse !important; table-layout: auto !important; }
+            .grid-table th { background-color: #1B4D7E !important; color: white !important; font-size: 14px !important; padding: 6px 2px !important; border: 1.5px solid #000 !important; white-space: nowrap !important; }
+            .grid-table td { padding: 4px 2px !important; font-size: 16px !important; font-weight: 700 !important; border: 1px solid #777 !important; white-space: nowrap !important; }
+            .resizer { display: none !important; }
+
+            .print-only-header { 
+                display: block !important; padding: 0 0 8px 0 !important; margin-bottom: 12px !important; border-bottom: 2px solid #1B4D7E; text-align: center; position: relative;
+            }
+            .print-only-header h2 { font-size: 22px !important; color: #1B4D7E !important; margin: 0 !important; }
+            .print-only-header h4 { font-size: 15px !important; color: #2c3e50 !important; margin: 4px 0 !important; }
+            .print-only-header p { font-size: 13px !important; color: #555 !important; margin: 0 !important; }
+
+            input.cell-input, input.header-subject-input { border: none !important; background: transparent !important; font-size: 16px !important; font-weight: 700 !important; padding: 0 !important; text-align: center; }
+            input.name-input { text-align: left !important; }
+            .del-subj-btn { display: none !important; }
+
+            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+        }
+
+        .meta-container {
+            background: white; padding: 10px 12px; border-radius: 0 0 5px 5px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px;
+        }
+
+        .meta-field label { display: block; font-size: 11px; font-weight: bold; color: #333; margin-bottom: 3px; text-transform: uppercase; }
+        .meta-field input { width: 100%; padding: 6px 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 12px; }
+
+        .toolbar { background: white; padding: 8px 12px; border-radius: 5px; margin-bottom: 12px; display: flex; gap: 8px; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1); flex-wrap: wrap; }
+        button, select { padding: 6px 12px; border: 1px solid #ccc; border-radius: 4px; font-weight: 600; cursor: pointer; font-size: 12px; }
+
+        .btn-add-stu { background-color: #1B4D7E; color: white; border:none; }
+        .btn-add-sub { background-color: #27AE60; color: white; border:none; }
+        .btn-print { background-color: #8E44AD; color: white; border:none; }
+        .btn-marksheet-print { background-color: #D35400; color: white; border:none; }
+        .btn-lock-pass { background-color: #E67E22; color: white; border:none; }
+        .btn-clear { background-color: #E74C3C; color: white; border:none; }
+        
+        .sort-select { background-color: #2c3e50; color: white; border: 1px solid #1a252f; font-weight: bold; }
+
+        .table-responsive { width: 100%; overflow-x: auto; background: white; }
+        .grid-table { width: 100%; border-collapse: collapse; text-align: center; table-layout: fixed; }
+        .grid-table th { background-color: #1B4D7E; color: white; padding: 8px 4px; font-weight: 700; font-size: 16px; border: 1px solid #103356; white-space: nowrap; position: relative; user-select: none; }
+        .resizer { position: absolute; right: 0; top: 0; width: 5px; cursor: col-resize; user-select: none; height: 100%; z-index: 10; }
+        .resizer:hover, .resizing { background-color: #3182CE; }
+
+        .header-subject-container { display: flex; align-items: center; justify-content: center; gap: 2px; width: 100%; overflow: hidden; }
+        input.header-subject-input { background: transparent; border: none; color: white; font-weight: 700; text-align: center; font-size: 16px; width: 100%; outline: none; }
+        .del-subj-btn { background: rgba(255,255,255,0.2); color: white; border: none; border-radius: 50%; width: 16px; height: 16px; font-size: 9px; cursor: pointer; padding: 0; flex-shrink: 0; }
+
+        /* INCREASED FONT SIZES FOR CELLS & INPUTS */
+        .grid-table td { border: 1px solid #E2E8F0; padding: 5px; overflow: hidden; font-size: 18px; }
+        .grid-table tr:nth-child(even) { background-color: #F8FAFC; }
+        input.cell-input { width: 100%; padding: 4px 2px; border: 1px solid transparent; text-align: center; font-size: 18px; font-weight: 700; outline: none; background: transparent; }
+        input.cell-input:focus { background: #EBF8FF; border: 1px solid #3182CE; }
+        input.name-input { text-align: left; padding-left: 6px; font-weight: 700; color: #2c3e50; }
+
+        .calc-col { background-color: #EDF2F7; font-weight: bold; color: #1A202C; font-size: 18px; }
+        .badge-fail { color: #E74C3C; font-weight: bold; }
+        .badge-pass { color: #27AE60; font-weight: bold; }
+
+        /* MARKSHEET STYLES */
+        .marksheet-container { 
+            background: #ffffff; 
+            padding: 25px 30px; 
+            border-radius: 12px; 
+            box-shadow: 0 10px 25px rgba(27, 77, 126, 0.12); 
+            margin: 20px auto; 
+            max-width: 850px;
+            border: 2px solid #e2e8f0; 
+            display: none; 
+            position: relative;
+        }
+
+        .marksheet-header { 
+            text-align: center; 
+            border-bottom: 3px double #1B4D7E; 
+            padding-bottom: 12px; 
+            margin-bottom: 15px; 
+            background: linear-gradient(180deg, #f0f7ff 0%, #ffffff 100%);
+            padding-top: 10px;
+            border-radius: 8px 8px 0 0;
+        }
+
+        .marksheet-header h2 { margin: 0; color: #0f3057; font-size: 22px; font-weight: 800; letter-spacing: 0.5px; }
+        .marksheet-header h4 { margin: 4px 0; color: #2b580c; font-size: 15px; font-weight: 700; }
+        .marksheet-header p { margin: 0; color: #4a5568; font-size: 13px; font-weight: 600; }
+
+        .marksheet-title-tag {
+            display: inline-block; background: linear-gradient(135deg, #1B4D7E 0%, #002244 100%);
+            color: #f1c40f; padding: 4px 18px; border-radius: 20px; font-weight: 800; font-size: 13px;
+            letter-spacing: 1.5px; margin-top: 8px; text-transform: uppercase; box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+        }
+
+        .student-info-grid { 
+            display: grid; grid-template-columns: 1fr 1fr; gap: 10px; 
+            background: linear-gradient(135deg, #eef2f5 0%, #e6edf5 100%); 
+            padding: 10px 18px; border-radius: 8px; border-left: 5px solid #1B4D7E; margin-bottom: 15px; font-size: 14px; color: #1a202c;
+        }
+
+        .student-info-grid div { display: flex; align-items: center; }
+        .student-info-grid strong { color: #0f3057; margin-right: 8px; }
+
+        .marksheet-table { width: 100%; border-collapse: separate; border-spacing: 0; margin-bottom: 15px; border-radius: 8px; overflow: hidden; border: 1px solid #cbd5e1; }
+        .marksheet-table th { background: linear-gradient(135deg, #1B4D7E 0%, #153e66 100%); color: #ffffff; padding: 8px 10px; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #0f3057; }
+        .marksheet-table td { border-bottom: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; padding: 7px 10px; text-align: center; font-size: 13px; font-weight: 600; }
+        .marksheet-table td:last-child { border-right: none; }
+        .marksheet-table tbody tr:nth-child(even) { background-color: #f8fafc; }
+
+        .grade-pill { display: inline-block; padding: 2px 8px; border-radius: 12px; font-weight: 800; font-size: 12px; }
+        .grade-pill.pass { background-color: #e6f4ea; color: #137333; border: 1px solid #ceead6; }
+        .grade-pill.fail { background-color: #fce8e6; color: #c5221f; border: 1px solid #fad2cf; }
+
+        .summary-box { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; background: linear-gradient(135deg, #0f3057 0%, #1B4D7E 100%); padding: 10px; border-radius: 8px; color: white; text-align: center; box-shadow: 0 4px 10px rgba(15, 48, 87, 0.2); }
+        .summary-card { background: rgba(255, 255, 255, 0.1); padding: 6px 4px; border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.15); }
+        .summary-card .title { font-size: 10px; text-transform: uppercase; color: #cbd5e1; letter-spacing: 0.5px; margin-bottom: 2px; }
+        .summary-card .value { font-size: 15px; font-weight: 800; color: #f1c40f; }
+
+        .signature-area { display: flex; justify-content: space-between; align-items: center; margin-top: 45px; padding: 0 10px; }
+        .signature-line { border-top: 2px dashed #64748b; width: 140px; text-align: center; padding-top: 5px; font-size: 12px; font-weight: 700; color: #334155; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h2>Academic Result Management System</h2>
-    <p>আপনার রেজাল্ট সফটওয়্যারটি প্রস্তুত এবং অফলাইনে ব্যবহারযোগ্য।</p>
-</div>
+    <!-- TOP CENTER WATERMARK FOR COMBINE TABULAR PRINT -->
+    <div class="print-watermark-top">Academic Result Software by SOHAG KOBIR</div>
 
-<script>
-    // PWA Service Worker Registration
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('./sw.js')
-            .then(reg => console.log("Service Worker Registered Successfully! Scope:", reg.scope))
-            .catch(err => console.log("SW Registration Failed:", err));
-        });
-    }
-</script>
+    <!-- PASSWORD LOCK OVERLAY -->
+    <div id="lockScreenOverlay">
+        <div class="lock-box">
+            <h2>🔒 Software Locked</h2>
+            <p style="font-size: 12px; color: #64748b; margin-bottom: 10px;">Enter Password to Access Result Software</p>
+            <input type="password" id="passInput" placeholder="Enter Password..." onkeyup="if(event.key === 'Enter') checkPassword()">
+            <button onclick="checkPassword()">Unlock Software</button>
+            <div id="lockErrorMsg" class="lock-error">❌ Wrong Password! Try Again.</div>
+        </div>
+    </div>
 
+    <!-- TITLE & GLOBAL SEARCH CONTAINER -->
+    <div class="title-header-container no-print">
+        <div class="permanent-software-title">
+            Academic Result Software
+            <span>SOHAG KOBIR</span>
+        </div>
+        
+        <!-- SEARCH BOX RIGHT CORNER -->
+        <div class="global-search-box">
+            <input type="text" id="globalSearchInput" placeholder="🔍 Search student name..." onkeyup="performGlobalSearch()">
+            <button onclick="performGlobalSearch()">Search</button>
+            <div id="searchResultsPopup" class="search-results-popup"></div>
+        </div>
+    </div>
+
+    <!-- MAIN NAVIGATION BAR FOR MULTI-FOLDERS -->
+    <div class="navbar-container no-print">
+        <div id="yearNavbarList" class="year-navbar-list"></div>
+        <button class="btn-add-year-folder" onclick="addNewFolder()">📁 ➕ New Folder</button>
+    </div>
+
+    <!-- META DATA -->
+    <div class="meta-container no-print">
+        <div class="meta-field">
+            <label>Institution Name</label>
+            <input type="text" id="inpInst" value="Kewa Khadizatul Kubra (RA:) Mohila Fazil Madrasha" oninput="saveCurrentTabData()">
+        </div>
+        <div class="meta-field">
+            <label>Exam</label>
+            <input type="text" id="inpExam" value="Half-Yearly Examination Academic Result" oninput="saveCurrentTabData()">
+        </div>
+        <div class="meta-field">
+            <label>Class Name</label>
+            <input type="text" id="inpClass" value="Class 1" oninput="updateCurrentClassTitle(this.value); saveCurrentTabData();">
+        </div>
+    </div>
+
+    <!-- PRINT HEADER FOR TABULAR SHEET -->
+    <div class="print-only-header">
+        <h2 id="dispInst">Institution Name</h2>
+        <h4 id="dispExam">Exam Name</h4>
+        <p id="dispClass">Class Name</p>
+    </div>
+
+    <!-- TOOLBAR WITH SORTING / FILTER -->
+    <div class="toolbar no-print">
+        <button class="btn-add-stu" onclick="addStudent()">➕ Add Student</button>
+        <button class="btn-add-sub" onclick="addSubject()">📚 Add Subject</button>
+        <button class="btn-print" onclick="window.print()">🖨️ Print All (Tabular)</button>
+        
+        <select id="studentSelect" onchange="renderIndividualMarksheet()">
+            <option value="">-- Select Student Marksheet --</option>
+        </select>
+        <button class="btn-marksheet-print" onclick="printIndividualMarksheet()">📄 Print Marksheet</button>
+
+        <button class="btn-lock-pass" onclick="changePassword()">🔑 Change Password</button>
+
+        <button class="btn-clear" onclick="clearData()">🗑️ Reset Class Data</button>
+
+        <!-- SORTING DROPDOWN -->
+        <select id="sortFilterSelect" class="sort-select" onchange="renderTable()">
+            <option value="default">📊 Default View (By Roll)</option>
+            <option value="marks_desc">1. Marks (High to Low)</option>
+            <option value="only_passed">2. Only Passed Students</option>
+            <option value="only_failed">3. Only Failed Students</option>
+            <option value="final_merit">4. Final Merit List (Passed First, Then Less Failed Subject First)</option>
+        </select>
+    </div>
+
+    <!-- RESULT TABLE -->
+    <div class="table-responsive main-table-view">
+        <table class="grid-table" id="resizableTable">
+            <thead>
+                <tr id="headerRow"></tr>
+            </thead>
+            <tbody id="gridBody"></tbody>
+        </table>
+    </div>
+
+    <!-- INDIVIDUAL MARKSHEET -->
+    <div class="marksheet-container" id="marksheetBox">
+        
+        <!-- TOP CENTER WATERMARK FOR MARKSHEET -->
+        <div class="print-watermark-top">Academic Result Software by SOHAG KOBIR</div>
+
+        <div class="marksheet-header">
+            <h2 id="msInst">Institution Name</h2>
+            <h4 id="msExam">Exam Name</h4>
+            <p id="msClass">Class Name</p>
+            <div><span class="marksheet-title-tag">Academic Mark Sheet</span></div>
+        </div>
+
+        <div class="student-info-grid">
+            <div><strong>Student Name:</strong> <span id="msName">-</span></div>
+            <div><strong>Roll No:</strong> <span id="msRoll">-</span></div>
+        </div>
+
+        <table class="marksheet-table">
+            <thead>
+                <tr>
+                    <th style="width: 10%;">SL</th>
+                    <th style="text-align: left; padding-left: 20px;">Subject Name</th>
+                    <th style="width: 18%;">Marks</th>
+                    <th style="width: 20%;">Grade Point</th>
+                    <th style="width: 20%;">Letter Grade</th>
+                </tr>
+            </thead>
+            <tbody id="msTableBody"></tbody>
+        </table>
+
+        <div class="summary-box">
+            <div class="summary-card">
+                <div class="title">Total Marks</div>
+                <div class="value" id="msTotalMarks">0</div>
+            </div>
+            <div class="summary-card">
+                <div class="title">GPA</div>
+                <div class="value" id="msGPA">0.00</div>
+            </div>
+            <div class="summary-card">
+                <div class="title">Result</div>
+                <div class="value" id="msGrade">-</div>
+            </div>
+            <div class="summary-card">
+                <div class="title">Position</div>
+                <div class="value" id="msPosition">-</div>
+            </div>
+        </div>
+
+        <div class="signature-area">
+            <div class="signature-line">Class Teacher</div>
+            <div class="signature-line">Guardian</div>
+            <div class="signature-line">Headmaster / Principal</div>
+        </div>
+    </div>
+
+    <script>
+        /* MASTER & USER PASSWORD LOCK SYSTEM LOGIC */
+        let DEFAULT_USER_PASS = "1234";        
+        let DEFAULT_MASTER_PASS = "sohag999";   
+
+        let savedUserPass = localStorage.getItem('madrasha_soft_user_pass') || DEFAULT_USER_PASS;
+        let savedMasterPass = localStorage.getItem('madrasha_soft_master_pass') || DEFAULT_MASTER_PASS;
+
+        function checkPassword() {
+            let input = document.getElementById('passInput').value;
+            let err = document.getElementById('lockErrorMsg');
+
+            if (input === savedUserPass || input === savedMasterPass) {
+                document.getElementById('lockScreenOverlay').style.display = 'none';
+                document.getElementById('passInput').value = '';
+                err.style.display = 'none';
+            } else {
+                err.style.display = 'block';
+            }
+        }
+
+        function changePassword() {
+            let masterCheck = prompt("🔒 Enter Master Password to authorize password change:");
+            
+            if (masterCheck !== savedMasterPass) {
+                alert("❌ Access Denied! Only Master Admin can change the password.");
+                return;
+            }
+
+            let newPass = prompt("🔑 Enter New User Password:");
+            if (newPass && newPass.trim() !== '') {
+                savedUserPass = newPass.trim();
+                localStorage.setItem('madrasha_soft_user_pass', savedUserPass);
+                alert("✅ User Password changed successfully!");
+            }
+        }
+
+        // Multi-Folder Data Structure
+        let defaultYearStructure = [
+            {
+                year: "2026",
+                classes: Array.from({ length: 12 }, (_, i) => ({
+                    id: `tab_2026_class_${i + 1}`,
+                    title: `Class ${i + 1}`
+                }))
+            }
+        ];
+
+        let yearsData = JSON.parse(localStorage.getItem('madrasha_years_structure')) || defaultYearStructure;
+        let activeYear = localStorage.getItem('madrasha_active_year') || '2026';
+        let activeClassId = localStorage.getItem('madrasha_active_class_id') || 'tab_2026_class_1';
+
+        let subjects = [];
+        let students = [];
+
+        function initApp() {
+            renderYearNavbar();
+            switchClass(activeYear, activeClassId, false);
+            attachGlobalKeyboardNavigation();
+            
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('.global-search-box')) {
+                    document.getElementById('searchResultsPopup').style.display = 'none';
+                }
+            });
+        }
+
+        /* RENDER NAVIGATION BAR WITH MULTI-FOLDERS */
+        function renderYearNavbar() {
+            let container = document.getElementById('yearNavbarList');
+            container.innerHTML = '';
+
+            yearsData.forEach(yObj => {
+                let dropdownDiv = document.createElement('div');
+                dropdownDiv.className = `dropdown-main ${yObj.year === activeYear ? 'active' : ''}`;
+
+                let btn = document.createElement('button');
+                btn.className = 'dropbtn-year';
+                btn.innerHTML = `📁 ${yObj.year} ▾`;
+
+                let menu = document.createElement('div');
+                menu.className = 'dropdown-content-menu';
+
+                yObj.classes.forEach(cObj => {
+                    let item = document.createElement('div');
+                    item.className = `folder-item ${(yObj.year === activeYear && cObj.id === activeClassId) ? 'active-folder' : ''}`;
+                    item.innerHTML = `
+                        <span>📁 ${cObj.title}</span>
+                        ${yObj.classes.length > 1 ? `<span style="color:#e74c3c; font-size:11px; font-weight:bold; padding:2px 5px;" onclick="deleteClassTab('${yObj.year}', '${cObj.id}', event)">✕</span>` : ''}
+                    `;
+                    item.onclick = () => switchClass(yObj.year, cObj.id);
+                    menu.appendChild(item);
+                });
+
+                let addClassBtn = document.createElement('div');
+                addClassBtn.className = 'btn-add-folder-green';
+                addClassBtn.innerHTML = '➕ Add New Class';
+                addClassBtn.onclick = () => addNewClassTab(yObj.year);
+                menu.appendChild(addClassBtn);
+
+                if (yearsData.length > 1) {
+                    let delYearBtn = document.createElement('div');
+                    delYearBtn.style.cssText = "color:#e74c3c; text-align:center; padding:8px; font-size:11px; font-weight:bold; cursor:pointer; background:#fff0f0; border-top:1px solid #fee2e2;";
+                    delYearBtn.innerHTML = `🗑️ Delete Folder ${yObj.year}`;
+                    delYearBtn.onclick = (e) => { e.stopPropagation(); deleteYearFolder(yObj.year); };
+                    menu.appendChild(delYearBtn);
+                }
+
+                dropdownDiv.appendChild(btn);
+                dropdownDiv.appendChild(menu);
+                container.appendChild(dropdownDiv);
+            });
+        }
+
+        function addNewFolder() {
+            let folderName = prompt("Enter New Folder Name:");
+            if (!folderName) return;
+
+            folderName = folderName.trim();
+            if (yearsData.some(y => y.year === folderName)) {
+                alert("This Folder already exists!");
+                return;
+            }
+
+            let newFolderClasses = Array.from({ length: 12 }, (_, i) => ({
+                id: `tab_${folderName}_class_${i + 1}`,
+                title: `Class ${i + 1}`
+            }));
+
+            yearsData.push({ year: folderName, classes: newFolderClasses });
+
+            localStorage.setItem('madrasha_years_structure', JSON.stringify(yearsData));
+            switchClass(folderName, newFolderClasses[0].id);
+        }
+
+        function deleteYearFolder(folderName) {
+            if (confirm(`Are you sure you want to delete folder "${folderName}" and all its contents?`)) {
+                yearsData = yearsData.filter(y => y.year !== folderName);
+                localStorage.setItem('madrasha_years_structure', JSON.stringify(yearsData));
+                
+                if (activeYear === folderName) {
+                    activeYear = yearsData[0].year;
+                    activeClassId = yearsData[0].classes[0].id;
+                }
+                switchClass(activeYear, activeClassId, false);
+            }
+        }
+
+        function switchClass(year, classId, savePrevious = true) {
+            if (savePrevious) saveCurrentTabData();
+
+            activeYear = year;
+            activeClassId = classId;
+
+            localStorage.setItem('madrasha_active_year', activeYear);
+            localStorage.setItem('madrasha_active_class_id', activeClassId);
+
+            loadCurrentTabData();
+            renderYearNavbar();
+            renderTable();
+            document.getElementById('marksheetBox').style.display = 'none';
+        }
+
+        function addNewClassTab(year) {
+            let yearObj = yearsData.find(y => y.year === year);
+            if (!yearObj) return;
+
+            let className = prompt("Enter New Class Name:", `Class ${yearObj.classes.length + 1}`);
+            if (!className) return;
+
+            let newId = `tab_${year}_${Date.now()}`;
+            yearObj.classes.push({ id: newId, title: className });
+
+            let defaultSubjects = ["Bangla", "English", "Math", "ICT", "Science"];
+            let defaultStudents = [
+                { roll: 1, name: "Student A", marks: [80, 75, 90, 85, 88] }
+            ];
+
+            let metaData = {
+                inst: document.getElementById('inpInst').value,
+                exam: `Academic Examination ${year}`,
+                cls: className,
+                subjects: defaultSubjects,
+                students: defaultStudents
+            };
+
+            localStorage.setItem(newId, JSON.stringify(metaData));
+            localStorage.setItem('madrasha_years_structure', JSON.stringify(yearsData));
+
+            switchClass(year, newId);
+        }
+
+        function deleteClassTab(year, classId, event) {
+            event.stopPropagation();
+            let yearObj = yearsData.find(y => y.year === year);
+            if (!yearObj) return;
+
+            if (yearObj.classes.length <= 1) {
+                return alert("At least one class item must remain inside this folder!");
+            }
+
+            if (!confirm("Are you sure you want to delete this class?")) return;
+
+            yearObj.classes = yearObj.classes.filter(c => c.id !== classId);
+            localStorage.removeItem(classId);
+            localStorage.setItem('madrasha_years_structure', JSON.stringify(yearsData));
+
+            if (activeClassId === classId) {
+                activeClassId = yearObj.classes[0].id;
+            }
+            switchClass(year, activeClassId, false);
+        }
+
+        function updateCurrentClassTitle(newTitle) {
+            let yearObj = yearsData.find(y => y.year === activeYear);
+            if (yearObj) {
+                let cObj = yearObj.classes.find(c => c.id === activeClassId);
+                if (cObj) {
+                    cObj.title = newTitle || 'Untitled Class';
+                    localStorage.setItem('madrasha_years_structure', JSON.stringify(yearsData));
+                    renderYearNavbar();
+                }
+            }
+        }
+
+        function saveCurrentTabData() {
+            let data = {
+                inst: document.getElementById('inpInst').value,
+                exam: document.getElementById('inpExam').value,
+                cls: document.getElementById('inpClass').value,
+                subjects: subjects,
+                students: students
+            };
+            localStorage.setItem(activeClassId, JSON.stringify(data));
+        }
+
+        function loadCurrentTabData() {
+            let stored = JSON.parse(localStorage.getItem(activeClassId));
+            let yearObj = yearsData.find(y => y.year === activeYear);
+            let cObj = yearObj ? yearObj.classes.find(c => c.id === activeClassId) : null;
+
+            if (!stored) {
+                subjects = ["Bangla 1st", "Bangla 2nd", "English 1st", "English 2nd", "Math", "ICT"];
+                students = [
+                    { roll: 1, name: "Student 1", marks: [85, 80, 75, 70, 90, 95] }
+                ];
+                document.getElementById('inpInst').value = "Kewa Khadizatul Kubra (RA:) Mohila Fazil Madrasha";
+                document.getElementById('inpExam').value = `Half-Yearly Examination ${activeYear}`;
+                document.getElementById('inpClass').value = cObj ? cObj.title : "Class 1";
+            } else {
+                subjects = stored.subjects || [];
+                students = stored.students || [];
+                document.getElementById('inpInst').value = stored.inst || "";
+                document.getElementById('inpExam').value = stored.exam || "";
+                document.getElementById('inpClass').value = stored.cls || "";
+            }
+        }
+
+        function performGlobalSearch() {
+            let query = document.getElementById('globalSearchInput').value.trim().toLowerCase();
+            let popup = document.getElementById('searchResultsPopup');
+            popup.innerHTML = '';
+
+            if (query === '') {
+                popup.style.display = 'none';
+                return;
+            }
+
+            let matches = [];
+
+            yearsData.forEach(yObj => {
+                yObj.classes.forEach(cObj => {
+                    let tabData = JSON.parse(localStorage.getItem(cObj.id));
+                    if (tabData && tabData.students) {
+                        tabData.students.forEach((stu, index) => {
+                            if (stu.name.toLowerCase().includes(query)) {
+                                matches.push({
+                                    year: yObj.year,
+                                    classId: cObj.id,
+                                    className: tabData.cls || cObj.title,
+                                    studentName: stu.name,
+                                    roll: stu.roll,
+                                    studentIndex: index
+                                });
+                            }
+                        });
+                    }
+                });
+            });
+
+            if (matches.length === 0) {
+                popup.innerHTML = '<div class="search-item" style="color: #e74c3c; font-weight: bold;">No student found</div>';
+            } else {
+                matches.forEach(item => {
+                    let div = document.createElement('div');
+                    div.className = 'search-item';
+                    div.innerHTML = `
+                        <div class="search-item-info">
+                            <strong>${item.studentName}</strong> (Roll: ${item.roll})
+                        </div>
+                        <span class="search-item-class">${item.year} - ${item.className}</span>
+                    `;
+                    div.onclick = () => selectSearchResult(item.year, item.classId, item.studentIndex);
+                    popup.appendChild(div);
+                });
+            }
+
+            popup.style.display = 'block';
+        }
+
+        function selectSearchResult(year, classId, studentIndex) {
+            document.getElementById('searchResultsPopup').style.display = 'none';
+            document.getElementById('globalSearchInput').value = '';
+
+            switchClass(year, classId);
+
+            setTimeout(() => {
+                let dropdown = document.getElementById('studentSelect');
+                dropdown.value = studentIndex;
+                renderIndividualMarksheet();
+                document.getElementById('marksheetBox').scrollIntoView({ behavior: 'smooth' });
+            }, 100);
+        }
+
+        function syncPrintHeader() {
+            let inst = document.getElementById('inpInst').value;
+            let exam = document.getElementById('inpExam').value;
+            let cls = document.getElementById('inpClass').value;
+
+            document.getElementById('dispInst').innerText = inst || '';
+            document.getElementById('dispExam').innerText = exam || '';
+            document.getElementById('dispClass').innerText = cls || '';
+        }
+
+        function getGradeInfo(mark) {
+            if (mark < 33) return { point: 0.0, grade: 'F' };
+            if (mark >= 80) return { point: 5.0, grade: 'A+' };
+            if (mark >= 70) return { point: 4.0, grade: 'A' };
+            if (mark >= 60) return { point: 3.5, grade: 'A-' };
+            if (mark >= 50) return { point: 3.0, grade: 'B' };
+            if (mark >= 40) return { point: 2.0, grade: 'C' };
+            if (mark >= 33) return { point: 1.0, grade: 'D' };
+            return { point: 0.0, grade: 'F' };
+        }
+
+        function calculateResults() {
+            let totalSubjects = subjects.length;
+
+            students.forEach((s, idx) => {
+                s.originalIndex = idx;
+                let markArray = s.marks || [];
+                let total = 0;
+                let gpaSum = 0;
+                let failedCount = 0;
+
+                for (let i = 0; i < totalSubjects; i++) {
+                    let mark = parseInt(markArray[i]) || 0;
+                    total += mark;
+
+                    let info = getGradeInfo(mark);
+                    if (info.grade === 'F') {
+                        failedCount++;
+                    }
+                    gpaSum += info.point;
+                }
+
+                s.totalMarks = total;
+                s.failedCount = failedCount;
+                s.isPassed = (failedCount === 0);
+                s.gpa = (failedCount > 0 || totalSubjects === 0) ? "0.00" : (gpaSum / totalSubjects).toFixed(2);
+
+                if (s.gpa == "5.00") s.grade = "A+";
+                else if (s.gpa >= "4.00") s.grade = "A";
+                else if (s.gpa >= "3.50") s.grade = "A-";
+                else if (s.gpa >= "3.00") s.grade = "B";
+                else if (s.gpa >= "2.00") s.grade = "C";
+                else if (s.gpa >= "1.00") s.grade = "D";
+                else s.grade = "F";
+            });
+
+            let passed = students.filter(s => s.isPassed).sort((a, b) => b.totalMarks - a.totalMarks);
+            let failed = students.filter(s => !s.isPassed).sort((a, b) => {
+                if (a.failedCount !== b.failedCount) {
+                    return a.failedCount - b.failedCount;
+                }
+                return b.totalMarks - a.totalMarks;
+            });
+
+            let meritRank = 1;
+            passed.forEach(s => { s.position = meritRank++; });
+            failed.forEach(s => { s.position = meritRank++; });
+
+            saveCurrentTabData();
+            populateStudentDropdown();
+        }
+
+        function populateStudentDropdown() {
+            let dropdown = document.getElementById('studentSelect');
+            let selectedVal = dropdown.value;
+            dropdown.innerHTML = '<option value="">-- Select Student Marksheet --</option>';
+
+            students.forEach((s) => {
+                let opt = document.createElement('option');
+                opt.value = s.originalIndex;
+                opt.innerText = `Roll: ${s.roll} - ${s.name}`;
+                dropdown.appendChild(opt);
+            });
+
+            dropdown.value = selectedVal;
+        }
+
+        function renderIndividualMarksheet() {
+            let origIdx = document.getElementById('studentSelect').value;
+            let box = document.getElementById('marksheetBox');
+
+            if (origIdx === "") {
+                box.style.display = "none";
+                return;
+            }
+
+            let s = students.find(item => item.originalIndex == origIdx);
+            if (!s) return;
+
+            document.getElementById('msInst').innerText = document.getElementById('inpInst').value;
+            document.getElementById('msExam').innerText = document.getElementById('inpExam').value;
+            document.getElementById('msClass').innerText = document.getElementById('inpClass').value;
+
+            document.getElementById('msName').innerText = s.name;
+            document.getElementById('msRoll').innerText = s.roll;
+            document.getElementById('msTotalMarks').innerText = s.totalMarks;
+            document.getElementById('msGPA').innerText = s.gpa;
+            document.getElementById('msGrade').innerText = s.grade;
+            document.getElementById('msPosition').innerText = s.position;
+
+            let tbody = document.getElementById('msTableBody');
+            tbody.innerHTML = '';
+
+            subjects.forEach((sub, cIdx) => {
+                let mark = (s.marks && s.marks[cIdx] !== undefined) ? parseInt(s.marks[cIdx]) || 0 : 0;
+                let info = getGradeInfo(mark);
+
+                let tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${cIdx + 1}</td>
+                    <td style="text-align: left; padding-left: 20px; color: #2c3e50;">${sub}</td>
+                    <td style="color: #0f3057;">${mark}</td>
+                    <td>${info.point.toFixed(2)}</td>
+                    <td><span class="grade-pill ${info.grade === 'F' ? 'fail' : 'pass'}">${info.grade}</span></td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            box.style.display = "block";
+        }
+
+        function printIndividualMarksheet() {
+            let idx = document.getElementById('studentSelect').value;
+            if (idx === "") {
+                alert("Please select a student from the dropdown list first!");
+                return;
+            }
+
+            document.body.classList.add('print-marksheet-mode');
+            window.print();
+            document.body.classList.remove('print-marksheet-mode');
+        }
+
+        function getSortedAndFilteredStudents() {
+            let mode = document.getElementById('sortFilterSelect').value;
+            let list = [...students];
+
+            if (mode === 'marks_desc') {
+                return list.sort((a, b) => b.totalMarks - a.totalMarks);
+            } else if (mode === 'only_passed') {
+                return list.filter(s => s.isPassed).sort((a, b) => b.totalMarks - a.totalMarks);
+            } else if (mode === 'only_failed') {
+                return list.filter(s => !s.isPassed).sort((a, b) => {
+                    if (a.failedCount !== b.failedCount) {
+                        return a.failedCount - b.failedCount;
+                    }
+                    return b.totalMarks - a.totalMarks;
+                });
+            } else if (mode === 'final_merit') {
+                let passed = list.filter(s => s.isPassed).sort((a, b) => b.totalMarks - a.totalMarks);
+                let failed = list.filter(s => !s.isPassed).sort((a, b) => {
+                    if (a.failedCount !== b.failedCount) {
+                        return a.failedCount - b.failedCount;
+                    }
+                    return b.totalMarks - a.totalMarks;
+                });
+                return [...passed, ...failed];
+            }
+
+            return list;
+        }
+
+        function renderTable() {
+            calculateResults();
+            syncPrintHeader();
+
+            let headerRow = document.getElementById('headerRow');
+            let hHtml = `<th style="width: 60px;">Roll<div class="resizer"></div></th><th style="width: 190px;">Student Name<div class="resizer"></div></th>`;
+
+            subjects.forEach((sub, subIdx) => {
+                hHtml += `
+                    <th style="width: 95px;">
+                        <div class="header-subject-container">
+                            <input type="text" class="header-subject-input" value="${sub}" onchange="renameSubject(${subIdx}, this.value)">
+                            <button class="del-subj-btn no-print" onclick="deleteSubject(${subIdx})">✕</button>
+                        </div>
+                        <div class="resizer"></div>
+                    </th>
+                `;
+            });
+
+            hHtml += `
+                <th style="width: 75px;">Total<div class="resizer"></div></th>
+                <th style="width: 65px;">GPA<div class="resizer"></div></th>
+                <th style="width: 65px;">Grade<div class="resizer"></div></th>
+                <th style="width: 75px;">Position<div class="resizer"></div></th>
+                <th class="no-print" style="width: 45px;">Action</th>
+            `;
+            headerRow.innerHTML = hHtml;
+
+            let tbody = document.getElementById('gridBody');
+            tbody.innerHTML = '';
+
+            let displayStudents = getSortedAndFilteredStudents();
+
+            displayStudents.forEach((s, displayIdx) => {
+                let origIdx = s.originalIndex;
+                let tr = document.createElement('tr');
+                
+                let rowHtml = `
+                    <td><input type="text" class="cell-input" data-row="${displayIdx}" data-col="0" value="${s.roll}" oninput="updateRoll(${origIdx}, this.value, this)"></td>
+                    <td><input type="text" class="cell-input name-input" data-row="${displayIdx}" data-col="1" value="${s.name}" oninput="updateName(${origIdx}, this.value)"></td>
+                `;
+
+                subjects.forEach((_, cIdx) => {
+                    let val = (s.marks && s.marks[cIdx] !== undefined) ? s.marks[cIdx] : 0;
+                    rowHtml += `<td><input type="text" class="cell-input" data-row="${displayIdx}" data-col="${cIdx + 2}" value="${val}" oninput="updateMark(${origIdx}, ${cIdx}, this.value, this)"></td>`;
+                });
+
+                rowHtml += `
+                    <td class="calc-col">${s.totalMarks}</td>
+                    <td class="calc-col">${s.gpa}</td>
+                    <td class="calc-col ${s.grade === 'F' ? 'badge-fail' : 'badge-pass'}">${s.grade}</td>
+                    <td class="calc-col" style="color: #1B4D7E;">${s.position}</td>
+                    <td class="no-print"><button style="padding:2px 5px; background:#e74c3c; color:white; border-radius:2px; font-size:9px;" onclick="deleteStudent(${origIdx})">✕</button></td>
+                `;
+
+                tr.innerHTML = rowHtml;
+                tbody.appendChild(tr);
+            });
+
+            makeColumnsResizable();
+        }
+
+        function attachGlobalKeyboardNavigation() {
+            const table = document.getElementById('resizableTable');
+
+            table.addEventListener('focusin', function(e) {
+                if (e.target && e.target.classList.contains('cell-input')) {
+                    e.target.select();
+                }
+            });
+
+            table.addEventListener('keydown', function(e) {
+                const input = e.target;
+                if (!input || !input.classList.contains('cell-input')) return;
+
+                let r = parseInt(input.getAttribute('data-row'));
+                let c = parseInt(input.getAttribute('data-col'));
+
+                if (isNaN(r) || isNaN(c)) return;
+
+                let targetR = r;
+                let targetC = c;
+
+                if (e.key === 'ArrowRight') {
+                    targetC = c + 1;
+                } else if (e.key === 'ArrowLeft') {
+                    targetC = c - 1;
+                } else if (e.key === 'ArrowDown' || e.key === 'Enter') {
+                    targetR = r + 1;
+                } else if (e.key === 'ArrowUp') {
+                    targetR = r - 1;
+                } else if (e.key === 'PageDown') {
+                    targetR = r + 5;
+                } else if (e.key === 'PageUp') {
+                    targetR = r - 5;
+                } else {
+                    return;
+                }
+
+                e.preventDefault();
+
+                let targetInput = document.querySelector(`.cell-input[data-row="${targetR}"][data-col="${targetC}"]`);
+                
+                if (!targetInput && (e.key === 'PageDown' || e.key === 'PageUp')) {
+                    let allRows = document.querySelectorAll('#gridBody tr').length;
+                    if (e.key === 'PageDown') targetR = allRows - 1;
+                    if (e.key === 'PageUp') targetR = 0;
+                    targetInput = document.querySelector(`.cell-input[data-row="${targetR}"][data-col="${targetC}"]`);
+                }
+
+                if (targetInput) {
+                    targetInput.focus();
+                    targetInput.select();
+                }
+            });
+        }
+
+        function makeColumnsResizable() {
+            const table = document.getElementById('resizableTable');
+            const cols = table.querySelectorAll('th');
+
+            cols.forEach((col) => {
+                const resizer = col.querySelector('.resizer');
+                if (!resizer) return;
+
+                let x = 0;
+                let w = 0;
+
+                const mouseDownHandler = function (e) {
+                    x = e.clientX;
+                    const styles = window.getComputedStyle(col);
+                    w = parseInt(styles.width, 10);
+
+                    document.addEventListener('mousemove', mouseMoveHandler);
+                    document.addEventListener('mouseup', mouseUpHandler);
+                    resizer.classList.add('resizing');
+                };
+
+                const mouseMoveHandler = function (e) {
+                    const dx = e.clientX - x;
+                    col.style.width = `${Math.max(30, w + dx)}px`;
+                };
+
+                const mouseUpHandler = function () {
+                    document.removeEventListener('mousemove', mouseMoveHandler);
+                    document.removeEventListener('mouseup', mouseUpHandler);
+                    resizer.classList.remove('resizing');
+                };
+
+                resizer.addEventListener('mousedown', mouseDownHandler);
+            });
+        }
+
+        function updateRoll(origIdx, val, inputElem) { 
+            students[origIdx].roll = parseInt(val) || 0; 
+            calculateResults(); 
+        }
+
+        function updateName(origIdx, val) { 
+            students[origIdx].name = val; 
+            saveCurrentTabData(); 
+            populateStudentDropdown(); 
+        }
+
+        function updateMark(origIdx, cIdx, val, inputElem) { 
+            if (!students[origIdx].marks) students[origIdx].marks = [];
+            students[origIdx].marks[cIdx] = parseInt(val) || 0; 
+
+            calculateResults();
+
+            let row = inputElem.closest('tr');
+            if (row) {
+                let calcCols = row.querySelectorAll('.calc-col');
+                let s = students[origIdx];
+                if (calcCols.length >= 4 && s) {
+                    calcCols[0].innerText = s.totalMarks;
+                    calcCols[1].innerText = s.gpa;
+                    calcCols[2].innerText = s.grade;
+                    calcCols[2].className = `calc-col ${s.grade === 'F' ? 'badge-fail' : 'badge-pass'}`;
+                    calcCols[3].innerText = s.position;
+                }
+            }
+        }
+
+        function renameSubject(index, newName) { subjects[index] = newName || `Subject ${index + 1}`; saveCurrentTabData(); renderTable(); }
+        function addSubject() {
+            let subName = prompt("Enter new subject name:");
+            if (subName) {
+                subjects.push(subName);
+                students.forEach(s => { if (!s.marks) s.marks = []; s.marks.push(0); });
+                renderTable();
+            }
+        }
+        function deleteSubject(index) {
+            if (confirm(`Delete subject?`)) {
+                subjects.splice(index, 1);
+                students.forEach(s => { if (s.marks) s.marks.splice(index, 1); });
+                renderTable();
+            }
+        }
+
+        function addStudent() {
+            let nextRoll = students.length > 0 ? Math.max(...students.map(s => s.roll || 0)) + 1 : 1;
+            students.push({ roll: nextRoll, name: "New Student", marks: new Array(subjects.length).fill(0) });
+            renderTable();
+        }
+
+        function deleteStudent(origIdx) {
+            if (confirm("Delete student?")) { students.splice(origIdx, 1); renderTable(); }
+        }
+
+        function clearData() {
+            if (confirm("Reset current class data?")) {
+                localStorage.removeItem(activeClassId);
+                loadCurrentTabData();
+                renderTable();
+            }
+        }
+
+        initApp();
+
+        /* AUTOMATIC SERVICE WORKER & PWA REGISTRATION */
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                .then(reg => console.log("Service Worker Registered Successfully! Scope:", reg.scope))
+                .catch(err => console.log("SW Registration Failed:", err));
+            });
+        }
+    </script>
 </body>
 </html>
