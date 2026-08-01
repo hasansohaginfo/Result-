@@ -17,6 +17,16 @@
         * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { margin: 0; padding: 15px; background-color: #f4f6f9; color: #222; font-size: 15px; position: relative; }
 
+        /* REMOVE NUMBER INPUT SPINNER ARROWS (UP/DOWN ICONS) */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { 
+            -webkit-appearance: none; 
+            margin: 0; 
+        }
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
+
         /* PASSWORD & SCHOOL CODE LOCK SCREEN OVERLAY */
         #lockScreenOverlay {
             position: fixed;
@@ -447,7 +457,6 @@
 
         let DEFAULT_MASTER_PASS = "sohag999";  
         let currentSchoolCode = "";
-        let isSaving = false;
 
         function checkPassword() {
             let passInput = document.getElementById('passInput').value;
@@ -531,20 +540,18 @@
 
             database.ref('schools/' + currentSchoolCode).once('value', (snapshot) => {
                 const data = snapshot.val();
-                if (data) {
-                    yearsData = data.yearsData || defaultYearStructure;
+                if (data && data.yearsData) {
+                    yearsData = data.yearsData;
                     if (data.activeYear) activeYear = data.activeYear;
                     if (data.activeClassId) activeClassId = data.activeClassId;
-
-                    renderYearNavbar();
-                    loadClassDataFromState();
                 } else {
-                    yearsData = defaultYearStructure;
+                    yearsData = JSON.parse(JSON.stringify(defaultYearStructure));
                     activeYear = '2026';
                     activeClassId = 'tab_2026_class_1';
-                    renderYearNavbar();
                     saveSchoolDataToFirebase();
                 }
+                renderYearNavbar();
+                loadClassDataFromState();
             });
         }
 
@@ -607,8 +614,8 @@
             document.getElementById('dispExam').innerText = document.getElementById('inpExam').value;
             document.getElementById('dispClass').innerText = document.getElementById('inpClass').value;
 
-            subjects = cObj.subjects || [];
-            students = cObj.students || [];
+            subjects = cObj.subjects ? [...cObj.subjects] : [];
+            students = cObj.students ? JSON.parse(JSON.stringify(cObj.students)) : [];
 
             renderTable();
             populateStudentDropdown();
@@ -756,7 +763,7 @@
             let totalSubjects = subjects.length;
 
             subjects.forEach((_, index) => {
-                let mark = parseFloat(student.marks[index]) || 0;
+                let mark = student.marks && student.marks[index] !== undefined ? parseFloat(student.marks[index]) || 0 : 0;
                 totalMarks += mark;
                 let info = getGradeInfo(mark);
                 if (info.grade === 'F') {
@@ -873,24 +880,24 @@
                 let stats = calculateStudentStats(stu);
                 let pos = positions[stu.originalIndex] || '-';
 
-                let tdRoll = `<td><input type="number" class="cell-input" value="${stu.roll}" onchange="updateStudentRoll(${stu.originalIndex}, this.value)"></td>`;
-                let tdName = `<td><input type="text" class="cell-input name-input" value="${stu.name}" onchange="updateStudentName(${stu.originalIndex}, this.value)"></td>`;
+                let tdRoll = `<td><input type="number" class="cell-input" value="${stu.roll}" onfocus="this.select()" onchange="updateStudentRoll(${stu.originalIndex}, this.value)"></td>`;
+                let tdName = `<td><input type="text" class="cell-input name-input" value="${stu.name}" onfocus="this.select()" onchange="updateStudentName(${stu.originalIndex}, this.value)"></td>`;
 
                 let subCells = '';
                 subjects.forEach((_, subIdx) => {
-                    let val = stu.marks[subIdx] !== undefined ? stu.marks[subIdx] : '';
-                    subCells += `<td><input type="number" class="cell-input" value="${val}" oninput="updateStudentMark(${stu.originalIndex}, ${subIdx}, this.value)"></td>`;
+                    let val = (stu.marks && stu.marks[subIdx] !== undefined) ? stu.marks[subIdx] : '';
+                    subCells += `<td><input type="number" class="cell-input" value="${val}" onfocus="this.select()" oninput="updateStudentMarkDirect(${stu.originalIndex}, ${subIdx}, this.value, this)"></td>`;
                 });
 
-                let tdTotal = `<td class="calc-col">${stats.totalMarks}</td>`;
-                let tdGPA = `<td class="calc-col">${stats.finalGPA}</td>`;
+                let tdTotal = `<td class="calc-col total-val">${stats.totalMarks}</td>`;
+                let tdGPA = `<td class="calc-col gpa-val">${stats.finalGPA}</td>`;
                 
                 let gradeDisplay = stats.failedCount > 0 
                     ? `<span class="badge-fail">F</span>` 
                     : `<span class="badge-pass">${stats.finalGrade}</span>`;
-                let tdGrade = `<td class="calc-col">${gradeDisplay}</td>`;
+                let tdGrade = `<td class="calc-col grade-val">${gradeDisplay}</td>`;
                 
-                let tdPos = `<td class="calc-col">${pos}</td>`;
+                let tdPos = `<td class="calc-col pos-val">${pos}</td>`;
                 let tdAction = `<td class="no-print"><button style="background:#e74c3c; color:white; border:none; border-radius:4px; padding:3px 8px; cursor:pointer;" onclick="deleteStudent(${stu.originalIndex})">🗑️</button></td>`;
 
                 tr.innerHTML = tdRoll + tdName + subCells + tdTotal + tdGPA + tdGrade + tdPos + tdAction;
@@ -899,6 +906,86 @@
 
             enableColumnResizing();
         }
+
+        /* FAST IN-PLACE INPUT UPDATE (FOCUS নষ্ট না করে হিসাব আপডেট করার জন্য) */
+        function updateStudentMarkDirect(stuIdx, subIdx, val, inputElem) {
+            if (!students[stuIdx].marks) students[stuIdx].marks = {};
+            students[stuIdx].marks[subIdx] = val !== "" ? parseFloat(val) : "";
+
+            let tr = inputElem.closest('tr');
+            if (tr) {
+                let stats = calculateStudentStats(students[stuIdx]);
+                let totalTd = tr.querySelector('.total-val');
+                let gpaTd = tr.querySelector('.gpa-val');
+                let gradeTd = tr.querySelector('.grade-val');
+
+                if (totalTd) totalTd.innerText = stats.totalMarks;
+                if (gpaTd) gpaTd.innerText = stats.finalGPA;
+                if (gradeTd) {
+                    gradeTd.innerHTML = stats.failedCount > 0 
+                        ? `<span class="badge-fail">F</span>` 
+                        : `<span class="badge-pass">${stats.finalGrade}</span>`;
+                }
+            }
+            saveSchoolDataToFirebase();
+        }
+
+        /* KEYBOARD ARROW KEYS & ENTER NAVIGATION FOR INPUT BOXES */
+        document.addEventListener('keydown', function(e) {
+            const target = e.target;
+            if (!target || !target.classList.contains('cell-input')) return;
+
+            const td = target.closest('td');
+            if (!td) return;
+            const tr = td.closest('tr');
+            if (!tr) return;
+            
+            const cellIndex = Array.from(tr.children).indexOf(td);
+
+            if (e.key === 'ArrowRight') {
+                e.preventDefault();
+                const nextTd = td.nextElementSibling;
+                if (nextTd) {
+                    const nextInput = nextTd.querySelector('.cell-input');
+                    if (nextInput) { nextInput.focus(); nextInput.select(); return; }
+                }
+                const nextRow = tr.nextElementSibling;
+                if (nextRow) {
+                    const firstInput = nextRow.cells[0]?.querySelector('.cell-input');
+                    if (firstInput) { firstInput.focus(); firstInput.select(); }
+                }
+            } else if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                const prevTd = td.previousElementSibling;
+                if (prevTd) {
+                    const prevInput = prevTd.querySelector('.cell-input');
+                    if (prevInput) { prevInput.focus(); prevInput.select(); return; }
+                }
+                const prevRow = tr.previousElementSibling;
+                if (prevRow) {
+                    const inputsInPrev = Array.from(prevRow.querySelectorAll('.cell-input'));
+                    if (inputsInPrev.length > 0) {
+                        const lastInput = inputsInPrev[inputsInPrev.length - 1];
+                        lastInput.focus();
+                        lastInput.select();
+                    }
+                }
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                const prevRow = tr.previousElementSibling;
+                if (prevRow && prevRow.cells[cellIndex]) {
+                    const input = prevRow.cells[cellIndex].querySelector('.cell-input');
+                    if (input) { input.focus(); input.select(); }
+                }
+            } else if (e.key === 'ArrowDown' || e.key === 'Enter') {
+                e.preventDefault();
+                const nextRow = tr.nextElementSibling;
+                if (nextRow && nextRow.cells[cellIndex]) {
+                    const input = nextRow.cells[cellIndex].querySelector('.cell-input');
+                    if (input) { input.focus(); input.select(); }
+                }
+            }
+        });
 
         function enableColumnResizing() {
             const table = document.getElementById('resizableTable');
@@ -928,9 +1015,9 @@
             });
         }
 
-        /* DATA MANAGEMENT ACTIONS - PERFECTLY FIXED */
+        /* DATA MANAGEMENT ACTIONS */
         function addStudent() {
-            let newRoll = students.length + 1;
+            let newRoll = students.length > 0 ? Math.max(...students.map(s => s.roll || 0)) + 1 : 1;
             students.push({
                 roll: newRoll,
                 name: `Student ${newRoll}`,
@@ -959,7 +1046,7 @@
             if (confirm("Are you sure you want to delete this subject?")) {
                 subjects.splice(idx, 1);
                 students.forEach(s => {
-                    delete s.marks[idx];
+                    if (s.marks) delete s.marks[idx];
                 });
                 renderTable();
                 saveSchoolDataToFirebase();
@@ -975,12 +1062,6 @@
         function updateStudentName(idx, val) {
             students[idx].name = val;
             populateStudentDropdown();
-            saveSchoolDataToFirebase();
-        }
-
-        function updateStudentMark(stuIdx, subIdx, val) {
-            students[stuIdx].marks[subIdx] = val !== "" ? parseFloat(val) : "";
-            renderTable();
             saveSchoolDataToFirebase();
         }
 
@@ -1041,7 +1122,7 @@
             tbody.innerHTML = '';
 
             subjects.forEach((sub, subIdx) => {
-                let mark = student.marks[subIdx] !== undefined ? student.marks[subIdx] : '-';
+                let mark = (student.marks && student.marks[subIdx] !== undefined) ? student.marks[subIdx] : '-';
                 let gradeInfo = getGradeInfo(mark);
 
                 let tr = document.createElement('tr');
